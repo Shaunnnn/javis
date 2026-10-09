@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { streamLLM, arrayItemParser } from "@/lib/client/api";
+import { askLLM, streamLLM, arrayItemParser } from "@/lib/client/api";
 import { getApplication, getQuestions, saveQuestions } from "@/lib/client/storage";
 import u from "../ui.module.css";
 import s from "./questions.module.css";
@@ -19,6 +19,7 @@ const TYPES = [
 const TYPE_LABEL = Object.fromEntries(TYPES.map((t) => [t.key, t.label]));
 
 const tidy = (t = "") => (t === t.toLowerCase() ? t.replace(/\b\w/g, (c) => c.toUpperCase()) : t);
+const strings = (a, max) => (Array.isArray(a) ? a.filter((t) => typeof t === "string" && t.trim()).slice(0, max) : []);
 const norm = (t) => t.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
 
 // Keep only well-formed questions that aren't repeats of ones already in the list.
@@ -35,6 +36,7 @@ function cleanBatch(raw, existing) {
       question: q.question.trim(),
       type,
       model_answer: q.model_answer.trim(),
+      key_points: strings(q.key_points, 6),
       tips: Array.isArray(q.tips) ? q.tips.filter((t) => typeof t === "string").slice(0, 4) : [],
     });
   }
@@ -46,6 +48,9 @@ export default function Questions() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState("all");
   const [open, setOpen] = useState({});
+  const [full, setFull] = useState({}); // which full answers are expanded
+  const [summarising, setSummarising] = useState({});
+  const [confirmClear, setConfirmClear] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(null); // { done, total } while streaming
   const [error, setError] = useState("");
@@ -84,7 +89,7 @@ export default function Questions() {
             existing_questions: items.length ? items.map((q) => `- ${q.question}`).join("\n") : "(none yet)",
             count: String(count),
           },
-          model: "strong",
+          model: "fast", // Flash: much quicker to start; switch to "strong" if answers need more depth
           json: true,
           temperature: 0.7,
         },
@@ -108,6 +113,26 @@ export default function Questions() {
     } finally {
       setBusy(false);
       setProgress(null);
+    }
+  }
+
+  const setField = (id, field, value) => update(items.map((q) => (q.id === id ? { ...q, [field]: value } : q)));
+
+  // Older questions were generated before key points existed; make them on request.
+  async function summarise(q) {
+    setSummarising((m) => ({ ...m, [q.id]: true }));
+    try {
+      const r = await askLLM({ prompt: "summarise", vars: { question: q.question, model_answer: q.model_answer }, model: "fast", json: true, temperature: 0.2 });
+      const points = strings(r?.key_points, 6);
+      if (points.length) setItems((cur) => {
+        const next = cur.map((x) => (x.id === q.id ? { ...x, key_points: points } : x));
+        saveQuestions(app.id, next);
+        return next;
+      });
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setSummarising((m) => ({ ...m, [q.id]: false }));
     }
   }
 
@@ -165,10 +190,12 @@ export default function Questions() {
       {error && <p className={u.error} role="alert">{error}</p>}
 
       {items.length === 0 && !busy ? (
-        <p className={`${u.lede} ${s.empty}`}>
-          Each batch adds ten new questions, never repeating earlier ones, with a model answer written from your own
-          experience. Tick questions to practise them in a targeted interview later.
-        </p>
+        <div className={s.empty}>
+          <p className={u.lede}>
+            Each batch adds ten new questions, never repeating earlier ones, with a model answer written from your own
+            experience. Tick questions to practise them in a targeted interview later.
+          </p>
+        </div>
       ) : (
         <>
           <div className={s.bar}>
@@ -180,7 +207,21 @@ export default function Questions() {
                 </button>
               ))}
             </div>
-            <span className={s.summary}>{selected} selected for practice · {practised} practised</span>
+            <span className={s.summary}>
+              {selected} selected for practice · {practised} practised ·{" "}
+              {confirmClear ? (
+                <>
+                  Delete all {items.length}?{" "}
+                  <button type="button" className={s.inline} disabled={busy}
+                    onClick={() => { update([]); setOpen({}); setFull({}); setFilter("all"); setConfirmClear(false); setError(""); }}>
+                    Yes, clear
+                  </button>{" "}
+                  <button type="button" className={s.inline} onClick={() => setConfirmClear(false)}>Cancel</button>
+                </>
+              ) : (
+                <button type="button" className={s.inline} onClick={() => setConfirmClear(true)} disabled={busy}>Clear all questions</button>
+              )}
+            </span>
           </div>
 
           <ol className={s.list}>
@@ -196,13 +237,36 @@ export default function Questions() {
                   <p className={s.question}>{q.question}</p>
                   <button type="button" className={s.reveal} onClick={() => setOpen({ ...open, [q.id]: !open[q.id] })}
                     aria-expanded={!!open[q.id]}>
-                    {open[q.id] ? "Hide model answer" : "Show model answer"}
+                    {open[q.id] ? "Hide answer" : "Show answer"}
                   </button>
                   <div className={s.answer}>
-                    <p>{q.model_answer}</p>
-                    {q.tips.length > 0 && (
-                      <ul className={s.tips}>{q.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                    <p className={s.subLabel}>Key points</p>
+                    {q.key_points?.length ? (
+                      <ol className={s.points}>{q.key_points.map((t, i) => <li key={i}>{t}</li>)}</ol>
+                    ) : (
+                      <button type="button" className={s.reveal} onClick={() => summarise(q)} disabled={summarising[q.id]}>
+                        {summarising[q.id] ? "Summarising…" : "Summarise into key points"}
+                      </button>
                     )}
+
+                    <button type="button" className={`${s.reveal} ${s.fullToggle}`} aria-expanded={!!full[q.id]}
+                      onClick={() => setFull({ ...full, [q.id]: !full[q.id] })}>
+                      {full[q.id] ? "Hide full answer" : "Read full answer"}
+                    </button>
+                    <p className={`${s.full} ${full[q.id] ? s.fullOpen : ""}`}>{q.model_answer}</p>
+
+                    {q.tips.length > 0 && (
+                      <>
+                        <p className={s.subLabel}>Tips</p>
+                        <ul className={s.tips}>{q.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                      </>
+                    )}
+
+                    <label className={s.subLabel} htmlFor={`notes-${q.id}`}>Your notes</label>
+                    <textarea id={`notes-${q.id}`} className={s.notes} rows={3} defaultValue={q.notes || ""}
+                      placeholder="How you'd put it in your own words…"
+                      onBlur={(e) => e.target.value !== (q.notes || "") && setField(q.id, "notes", e.target.value)} />
+                    {q.notes && <p className={s.notesPrint}>{q.notes}</p>}
                   </div>
                 </div>
                 <button type="button" className={`${s.practised} ${q.practised ? s.practisedOn : ""}`}

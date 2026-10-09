@@ -44,7 +44,7 @@ export async function POST(req) {
   }
 
   const schema = SCHEMAS[prompt];
-  if (stream) return streamResponse({ text, files, model, json: Boolean(json), temperature, schema });
+  if (stream) return streamResponse({ text, files, model, json: Boolean(json), temperature, schema }, prompt);
 
   try {
     const result = await generate({ text, files, model, json: Boolean(json), temperature, schema });
@@ -57,11 +57,13 @@ export async function POST(req) {
 
 // Streams Gemini's reply as plain text. Errors before the first chunk return JSON
 // like the normal path; an error mid-stream just ends the stream early.
-async function streamResponse(opts) {
+async function streamResponse(opts, name) {
+  const t0 = Date.now();
   const chunks = generateStream(opts);
   let first;
   try {
     first = await chunks.next();
+    console.info(`[llm] ${name} (${opts.model}): first text after ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   } catch (err) {
     console.error("[/api/llm stream]", err);
     return errorResponse(err);
@@ -74,6 +76,7 @@ async function streamResponse(opts) {
       } catch (err) {
         console.error("[/api/llm stream] mid-stream", err);
       } finally {
+        console.info(`[llm] ${name} (${opts.model}): finished in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
         controller.close();
       }
     },
