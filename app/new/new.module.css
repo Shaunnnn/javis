@@ -37,3 +37,4 @@
   .submit > span { display: none; }
 }
 @media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: var(--space-3); } }
+.req { color: var(--danger); font-size: var(--text-sm); vertical-align: top; }

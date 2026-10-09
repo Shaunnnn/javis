@@ -3,12 +3,16 @@ Purpose: Step 2. Read the candidate's resume and the job, and build one profile 
 Placeholders: {company} {position} {resume} {job_details}
 Images may be attached (a resume photo or a job-posting screenshot); each is labelled.
 Returns JSON only:
-{ "candidate_name": "", "candidate_skills": [], "experience_highlights": [], "role_requirements": [], "gaps": [], "company_context": "" }
+{ "company": "", "position": "", "candidate_name": "", "candidate_skills": [], "experience_highlights": [], "role_requirements": [], "gaps": [], "company_context": "" }
 -->
-You are preparing a candidate for an interview for the {position} role at {company}.
+You are preparing a candidate for a job interview.
+Company given by the candidate: {company}
+Position given by the candidate: {position}
 
 Read the resume and the job details below (and any attached images) and return a structured profile.
 
+- company: the company name. Use the one given by the candidate if there is one; otherwise take it from the job details.
+- position: the job title, short and clean (e.g. "Senior Software Engineer, iOS"). Use the one given if there is one; otherwise take it from the job details.
 - candidate_name: the candidate's first name as written on the resume, or "" if not shown.
 - candidate_skills: concrete skills the resume actually shows.
 - experience_highlights: the strongest specific experiences, each one sentence, keeping numbers and results the resume gives.

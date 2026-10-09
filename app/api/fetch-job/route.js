@@ -5,7 +5,7 @@ import dns from "node:dns/promises";
 import net from "node:net";
 
 export const runtime = "nodejs";
-export const maxDuration = 20;
+export const maxDuration = 15;
 
 const MAX_BYTES = 2_000_000;
 const MIN_USEFUL_CHARS = 600;
@@ -72,13 +72,19 @@ export async function POST(req) {
     return NextResponse.json({ ok: false, reason: "That doesn't look like a valid link." });
   }
 
+  // LinkedIn search/feed pages are lists, not one posting, and usually blocked anyway.
+  if (/(^|\.)linkedin\.com$/i.test(url.hostname) && !/\/jobs\/view\//.test(url.pathname)) {
+    return NextResponse.json({ ok: false, reason: "That LinkedIn link is a list of jobs, not one posting, and LinkedIn blocks reading it. Upload a screenshot of the job posting instead." });
+  }
+
+  const deadline = AbortSignal.timeout(10_000);
   try {
     let res;
     for (let hop = 0; hop < 4; hop++) {
       await assertPublic(url);
       res = await fetch(url, {
         redirect: "manual",
-        signal: AbortSignal.timeout(8000),
+        signal: deadline,
         headers: {
           "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
           Accept: "text/html,application/xhtml+xml",

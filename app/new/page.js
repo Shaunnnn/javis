@@ -8,6 +8,8 @@ import { saveApplication } from "@/lib/client/storage";
 import u from "../ui.module.css";
 import s from "./new.module.css";
 
+const Req = () => <span className={s.req} aria-label="required">*</span>;
+
 function FilePicker({ id, accept, file, onChange, label }) {
   return (
     <div className={s.fileRow}>
@@ -33,7 +35,7 @@ export default function NewApplication() {
   const [error, setError] = useState("");
 
   const jobReady = jobMode === "link" ? link.trim() : shot;
-  const ready = resume && company.trim() && position.trim() && jobReady && agreed && !status;
+  const ready = resume && jobReady && agreed && !status;
 
   async function analyse(e) {
     e.preventDefault();
@@ -77,9 +79,14 @@ export default function NewApplication() {
       setStatus("Javis is reviewing your resume against the role…");
       const profile = await askLLM({
         prompt: "analysis",
-        vars: { company: company.trim(), position: position.trim(), resume: resumeText, job_details: jobText },
+        vars: {
+          company: company.trim() || "(not given; take it from the job details)",
+          position: position.trim() || "(not given; take it from the job details)",
+          resume: resumeText,
+          job_details: jobText,
+        },
         files,
-        model: "strong",
+        model: "fast",
         json: true,
         temperature: 0.2,
       });
@@ -87,8 +94,8 @@ export default function NewApplication() {
       saveApplication({
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
-        company: company.trim(),
-        position: position.trim(),
+        company: company.trim() || profile.company || "Unknown company",
+        position: position.trim() || profile.position || "Unknown role",
         jobLink: jobMode === "link" ? link.trim() : "",
         resumeText: files.some((f) => f.label.includes("resume")) ? "" : resumeText,
         profile,
@@ -109,7 +116,7 @@ export default function NewApplication() {
       <form className={s.form} onSubmit={analyse}>
         <div className={s.field}>
           <div>
-            <span className={s.label}>Resume</span>
+            <span className={s.label}>Resume <Req /></span>
             <p className={s.hint}>A PDF works best; a screenshot or photo also works. Remove your home address and NRIC or ID number first. Javis doesn't need them.</p>
           </div>
           <FilePicker id="resume" accept="application/pdf,image/*" file={resume} onChange={setResume} label="Choose resume" />
@@ -118,7 +125,7 @@ export default function NewApplication() {
         <div className={s.field}>
           <div>
             <span className={s.label}>The role</span>
-            <p className={s.hint}>Exactly as the posting names it.</p>
+            <p className={s.hint}>Optional. Leave blank and Javis takes them from the job posting.</p>
           </div>
           <div className={s.row}>
           <div>
@@ -134,7 +141,7 @@ export default function NewApplication() {
 
         <div className={s.field}>
           <div>
-            <span className={s.label}>Job posting</span>
+            <span className={s.label}>Job posting <Req /></span>
             <p className={s.hint}>A link to the posting. If the site blocks reading it, use a screenshot.</p>
           </div>
           <div>
@@ -156,7 +163,7 @@ export default function NewApplication() {
         </div>
 
         <div className={s.field}>
-          <span className={s.label}>Privacy</span>
+          <span className={s.label}>Privacy <Req /></span>
           <div className={s.privacy}>
           <p>Your resume, questions and results are stored only in this browser. Nothing is saved on a server.</p>
           <p>To analyse them, text and images are sent to Google's Gemini API. On Gemini's free tier, Google may use this data to improve its products.</p>
