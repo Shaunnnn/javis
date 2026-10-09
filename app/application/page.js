@@ -5,11 +5,13 @@ import Header from "@/components/Header";
 import { getApplication } from "@/lib/client/storage";
 import u from "../ui.module.css";
 
-function List({ label, items }) {
+function List({ label, items, inline }) {
   return (
     <section className={u.section}>
       <h2 className={u.sectionLabel} style={{ fontFamily: "var(--font-body)", fontWeight: 400 }}>{label}</h2>
-      {items?.length ? (
+      {items?.length && inline ? (
+        <ul className={u.inlineList}>{items.map((t, i) => <li key={i}>{t}</li>)}</ul>
+      ) : items?.length ? (
         <ul style={{ margin: 0, paddingLeft: "1.1em" }}>
           {items.map((t, i) => <li key={i} style={{ marginBottom: "var(--space-2)" }}>{t}</li>)}
         </ul>
@@ -41,9 +43,12 @@ export default function Application() {
   return (
     <main className={u.shell}>
       <Header right={<Link href="/new">New application</Link>} />
-      <p className={u.sectionLabel} style={{ marginTop: "var(--space-6)" }}>{tidy(app.company)}</p>
-      <h1 className={u.title} style={{ marginTop: 0 }}>{tidy(app.position)}</h1>
-      <p className={u.lede}>
+      <section className={u.pageTop}>
+        <p className={`${u.sectionLabel} ${u.pageTopLabel}`}>{tidy(app.company)}</p>
+        <h1 className={`${u.title} ${u.pageTopTitle}`}>{tidy(app.position)}</h1>
+        <Link href="/questions" className={`btn btn-primary ${u.topBtn}`}>Prepare questions</Link>
+      </section>
+      <p className={u.lede} style={{ marginTop: "var(--space-3)" }}>
         {p.candidate_name ? `${p.candidate_name}, here` : "Here"} is how your experience lines up with the role.
         Every question Javis prepares builds on this.
       </p>
@@ -60,12 +65,9 @@ export default function Application() {
         <List label="What the role needs" items={p.role_requirements} />
         <List label="Your strongest experience" items={p.experience_highlights} />
         <List label="Gaps to prepare for" items={p.gaps} />
-        <List label="Your skills" items={p.candidate_skills} />
+        <List label="Your skills" items={p.candidate_skills} inline />
       </div>
 
-      <div className={u.actions}>
-        <Link href="/questions" className="btn btn-primary">Prepare questions</Link>
-      </div>
     </main>
   );
 }
