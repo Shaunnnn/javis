@@ -1,8 +1,9 @@
 // Every AI call in the app goes through here. The browser names a prompt
 // from /prompts and sends its values; it never sends raw prompt text or sees the key.
 import { NextResponse } from "next/server";
-import { generate } from "@/lib/llm";
+import { generate, generateStream } from "@/lib/llm";
 import { renderPrompt, PROMPTS } from "@/lib/prompts";
+import { SCHEMAS } from "@/lib/schemas";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -31,7 +32,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { prompt, vars = {}, files = [], model = "fast", json = false, temperature } = body ?? {};
+  const { prompt, vars = {}, files = [], model = "fast", json = false, temperature, stream = false } = body ?? {};
   if (!PROMPTS.includes(prompt)) return NextResponse.json({ error: "Unknown prompt" }, { status: 400 });
   if (!validFiles(files)) return NextResponse.json({ error: "Invalid attachment" }, { status: 400 });
 
@@ -42,15 +43,49 @@ export async function POST(req) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
+  const schema = SCHEMAS[prompt];
+  if (stream) return streamResponse({ text, files, model, json: Boolean(json), temperature, schema });
+
   try {
-    const result = await generate({ text, files, model, json: Boolean(json), temperature });
+    const result = await generate({ text, files, model, json: Boolean(json), temperature, schema });
     return NextResponse.json({ result });
   } catch (err) {
     console.error("[/api/llm]", err);
-    const status = err?.status === 429 ? 429 : 502;
-    return NextResponse.json(
-      { error: status === 429 ? "Gemini's free-tier limit was hit. Try again in a minute." : "Javis couldn't reach Gemini. Try again." },
-      { status }
-    );
+    return errorResponse(err);
   }
+}
+
+// Streams Gemini's reply as plain text. Errors before the first chunk return JSON
+// like the normal path; an error mid-stream just ends the stream early.
+async function streamResponse(opts) {
+  const chunks = generateStream(opts);
+  let first;
+  try {
+    first = await chunks.next();
+  } catch (err) {
+    console.error("[/api/llm stream]", err);
+    return errorResponse(err);
+  }
+  const encoder = new TextEncoder();
+  const body = new ReadableStream({
+    async start(controller) {
+      try {
+        for (let r = first; !r.done; r = await chunks.next()) controller.enqueue(encoder.encode(r.value));
+      } catch (err) {
+        console.error("[/api/llm stream] mid-stream", err);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+function errorResponse(err) {
+  const s = err?.status;
+  const [status, error] =
+    s === 429 ? [429, "Gemini's free-tier limit was hit. Try again in a minute."]
+    : s === 500 || s === 503 ? [503, "Gemini is very busy right now. Give it a moment and try again."]
+    : [502, "Javis couldn't reach Gemini. Try again."];
+  return NextResponse.json({ error }, { status });
 }

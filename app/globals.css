@@ -41,3 +41,9 @@ h1, h2, .display {
 
 .fade-in { animation: fade var(--slow) var(--ease) both; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+@media print {
+  body { background: #fff; color: #111; }
+  header { border-color: #ccc !important; }
+  header a, h1, h2, p, li { color: #111 !important; }
+}

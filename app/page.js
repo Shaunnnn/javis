@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { getApplication } from "@/lib/client/storage";
+import { getApplication, getQuestions } from "@/lib/client/storage";
 import u from "./ui.module.css";
 import h from "./home.module.css";
 
@@ -25,7 +25,7 @@ export default function Home() {
           <p className={`${u.lede} ${h.currentCompany}`}>{tidy(app.company)}</p>
           <div className={h.currentActions}>
             <Link href="/new" className="btn btn-outline">Start a new application</Link>
-            <Link href="/application" className="btn btn-primary">Continue</Link>
+            <Link href={getQuestions(app.id).length ? "/questions" : "/application"} className="btn btn-primary">Continue</Link>
           </div>
         </section>
       ) : (

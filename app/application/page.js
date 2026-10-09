@@ -63,7 +63,9 @@ export default function Application() {
         <List label="Your skills" items={p.candidate_skills} />
       </div>
 
-      <p className={u.note}>Next: interview questions with model answers (Step 3).</p>
+      <div className={u.actions}>
+        <Link href="/questions" className="btn btn-primary">Prepare questions</Link>
+      </div>
     </main>
   );
 }
