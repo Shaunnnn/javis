@@ -10,7 +10,8 @@
 
 /* Reading width: long text stays comfortable even on wide screens. */
 .read { max-width: 68ch; }
-.narrow { max-width: 720px; }
+/* Narrow page (forms, reading): header and content share the same edges. */
+.shellNarrow { composes: shell; max-width: 752px; }
 
 /* Two columns that compare side by side, stacked on small screens. */
 .columns { display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--space-5); }

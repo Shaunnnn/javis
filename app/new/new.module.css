@@ -1,7 +1,9 @@
-.form { margin-top: var(--space-5); max-width: 720px; }
-.field { padding: var(--space-4) 0; border-top: var(--line); }
+.form { margin-top: var(--space-5); }
+/* Wide form: label and hint on the left, the control on the right. */
+.field, .submit { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr; gap: var(--space-5); padding: var(--space-4) 0; border-top: var(--line); }
+.submit { border-top: var(--line); padding-top: var(--space-5); }
 .label { display: block; font-weight: 500; margin-bottom: var(--space-1); }
-.hint { font-size: var(--text-sm); color: var(--muted); margin: 0 0 var(--space-3); }
+.hint { font-size: var(--text-sm); color: var(--muted); margin: 0; max-width: 34ch; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 
 .input {
@@ -30,4 +32,8 @@
 
 .status { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--brass-light); }
 
-@media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: 0; } }
+@media (max-width: 760px) {
+  .field, .submit { grid-template-columns: 1fr; gap: var(--space-3); }
+  .submit > span { display: none; }
+}
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: var(--space-3); } }

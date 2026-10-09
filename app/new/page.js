@@ -108,12 +108,19 @@ export default function NewApplication() {
 
       <form className={s.form} onSubmit={analyse}>
         <div className={s.field}>
-          <span className={s.label}>Resume</span>
-          <p className={s.hint}>A PDF works best; a screenshot or photo also works. Remove your home address and NRIC or ID number first. Javis doesn't need them.</p>
+          <div>
+            <span className={s.label}>Resume</span>
+            <p className={s.hint}>A PDF works best; a screenshot or photo also works. Remove your home address and NRIC or ID number first. Javis doesn't need them.</p>
+          </div>
           <FilePicker id="resume" accept="application/pdf,image/*" file={resume} onChange={setResume} label="Choose resume" />
         </div>
 
-        <div className={`${s.field} ${s.row}`}>
+        <div className={s.field}>
+          <div>
+            <span className={s.label}>The role</span>
+            <p className={s.hint}>Exactly as the posting names it.</p>
+          </div>
+          <div className={s.row}>
           <div>
             <label className={s.label} htmlFor="company">Company</label>
             <input id="company" className={s.input} value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g. Grab" autoComplete="organization" />
@@ -122,10 +129,15 @@ export default function NewApplication() {
             <label className={s.label} htmlFor="position">Position</label>
             <input id="position" className={s.input} value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. Software Engineer, Payments" />
           </div>
+          </div>
         </div>
 
         <div className={s.field}>
-          <span className={s.label}>Job posting</span>
+          <div>
+            <span className={s.label}>Job posting</span>
+            <p className={s.hint}>A link to the posting. If the site blocks reading it, use a screenshot.</p>
+          </div>
+          <div>
           <div className={s.tabs} role="tablist">
             {["link", "screenshot"].map((m) => (
               <button key={m} type="button" role="tab" aria-selected={jobMode === m}
@@ -140,20 +152,29 @@ export default function NewApplication() {
             <FilePicker id="shot" accept="image/*" file={shot} onChange={setShot} label="Choose screenshot" />
           )}
           {linkNotice && jobMode === "screenshot" && <p className={s.notice}>{linkNotice}</p>}
+          </div>
         </div>
 
-        <div className={`${s.field} ${s.privacy}`}>
+        <div className={s.field}>
+          <span className={s.label}>Privacy</span>
+          <div className={s.privacy}>
           <p>Your resume, questions and results are stored only in this browser. Nothing is saved on a server.</p>
           <p>To analyse them, text and images are sent to Google's Gemini API. On Gemini's free tier, Google may use this data to improve its products.</p>
           <label className={s.check}>
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
             <span>I understand and agree to continue.</span>
           </label>
+          </div>
         </div>
 
-        <button className="btn btn-primary" type="submit" disabled={!ready}>Analyse</button>
-        {status && <p className={s.status} role="status">{status}</p>}
-        {error && <p className={u.error} role="alert">{error}</p>}
+        <div className={s.submit}>
+          <span />
+          <div>
+            <button className="btn btn-primary" type="submit" disabled={!ready}>Analyse</button>
+            {status && <p className={s.status} role="status">{status}</p>}
+            {error && <p className={u.error} role="alert">{error}</p>}
+          </div>
+        </div>
       </form>
     </main>
   );
