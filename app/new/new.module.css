@@ -1,4 +1,4 @@
-.form { margin-top: var(--space-5); }
+.form { margin-top: var(--space-5); max-width: 720px; }
 .field { padding: var(--space-4) 0; border-top: var(--line); }
 .label { display: block; font-weight: 500; margin-bottom: var(--space-1); }
 .hint { font-size: var(--text-sm); color: var(--muted); margin: 0 0 var(--space-3); }

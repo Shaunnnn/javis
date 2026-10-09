@@ -5,16 +5,17 @@ import Header from "@/components/Header";
 import { getApplication } from "@/lib/client/storage";
 import u from "../ui.module.css";
 
-function List({ label, items, tone }) {
-  if (!items?.length) return null;
+function List({ label, items }) {
   return (
     <section className={u.section}>
       <h2 className={u.sectionLabel} style={{ fontFamily: "var(--font-body)", fontWeight: 400 }}>{label}</h2>
-      <ul style={{ margin: 0, paddingLeft: "1.1em" }}>
-        {items.map((t, i) => (
-          <li key={i} style={{ marginBottom: "var(--space-1)", ...(tone && { "--marker": tone }) }}>{t}</li>
-        ))}
-      </ul>
+      {items?.length ? (
+        <ul style={{ margin: 0, paddingLeft: "1.1em" }}>
+          {items.map((t, i) => <li key={i} style={{ marginBottom: "var(--space-2)" }}>{t}</li>)}
+        </ul>
+      ) : (
+        <p style={{ margin: 0, color: "var(--muted)" }}>Nothing noted.</p>
+      )}
     </section>
   );
 }
@@ -48,13 +49,17 @@ export default function Application() {
       {p.company_context && (
         <section className={u.section}>
           <h2 className={u.sectionLabel} style={{ fontFamily: "var(--font-body)", fontWeight: 400 }}>About the role</h2>
-          <p style={{ margin: 0 }}>{p.company_context}</p>
+          <p className={u.read} style={{ margin: 0 }}>{p.company_context}</p>
         </section>
       )}
-      <List label="What the role needs" items={p.role_requirements} />
-      <List label="Your strongest experience" items={p.experience_highlights} />
-      <List label="Your skills" items={p.candidate_skills} />
-      <List label="Gaps to prepare for" items={p.gaps} />
+
+      {/* Left: the role. Right: you. Read across to compare. */}
+      <div className={u.columns}>
+        <List label="What the role needs" items={p.role_requirements} />
+        <List label="Your strongest experience" items={p.experience_highlights} />
+        <List label="Gaps to prepare for" items={p.gaps} />
+        <List label="Your skills" items={p.candidate_skills} />
+      </div>
 
       <p className={u.note}>Next: interview questions with model answers (Step 3).</p>
     </main>
