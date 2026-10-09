@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "node scripts/copy-pdf-worker.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -15,6 +16,7 @@
     "next": "^16.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "pdfjs-dist": "^6.4.299"
   }
 }

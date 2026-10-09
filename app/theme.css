@@ -1,4 +1,11 @@
-/* Javis theme: the one place to adjust colours, fonts and spacing. */
+/* Javis theme: the one place to adjust colours, fonts and spacing.
+
+   Rules that keep it from feeling like a law firm or hotel:
+   - Serif (--font-display) ONLY for: app name, Javis's name, page titles, the big score. Never questions, answers or buttons.
+   - Brass ONLY for: the one main button per screen, anything that IS Javis (name, captions, core glow), and tiny accents.
+     No gold borders, icons or decorative lines.
+   - The futuristic feel comes from Javis's core (Step 5); everything else stays quiet and sharp.
+   - If it ever feels stuffy, adjust in this order: less serif -> cooler/paler brass -> lift --ink toward slate. */
 :root {
   /* colour */
   --ink: #0d1524;          /* background */

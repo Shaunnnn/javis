@@ -1,0 +1,6 @@
+.header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: var(--line); }
+.brand { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); color: var(--ivory); text-decoration: none; }
+.brand span { color: var(--brass-light); }
+.right { font-size: var(--text-sm); color: var(--muted); }
+.right a { color: var(--muted); }
+.right a:hover { color: var(--ivory); }

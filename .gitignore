@@ -7,3 +7,6 @@ out/
 # secrets: never commit
 .env
 .env*.local
+
+# generated on install
+public/pdf.worker.min.mjs
