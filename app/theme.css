@@ -1,0 +1,43 @@
+/* Javis theme: the one place to adjust colours, fonts and spacing. */
+:root {
+  /* colour */
+  --ink: #0d1524;          /* background */
+  --panel: #1a2232;        /* slightly lighter surfaces */
+  --hairline: #2a2f3a;     /* 1px separators */
+  --brass: #c9a55c;        /* Javis and main actions */
+  --brass-light: #e2c27f;  /* brass text and glow */
+  --ivory: #efe8da;        /* main text */
+  --muted: #8e95a3;        /* secondary text */
+  --sage: #9cc5a8;         /* candidate, progress, done well */
+  --danger: #d98b7a;       /* errors, used sparingly */
+
+  /* type: families come from next/font in layout.js */
+  --font-display: var(--font-cormorant), Georgia, serif;   /* 18px and up only */
+  --font-body: var(--font-instrument), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace; /* small numbers only */
+
+  --text-sm: 14px;
+  --text-base: 17px;
+  --text-lg: 22px;
+  --text-xl: 34px;
+  --text-score: 88px;
+
+  /* space and shape */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --space-6: 64px;
+  --radius: 2px;
+  --line: 1px solid var(--hairline);
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --slow: 600ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --slow: 0ms; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
