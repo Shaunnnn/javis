@@ -23,6 +23,9 @@ h1, h2, .display {
 .rule { border: 0; border-top: var(--line); margin: 0; }
 
 .btn {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
   font: 500 var(--text-base)/1 var(--font-body);
   padding: 14px 22px;
   border-radius: var(--radius);

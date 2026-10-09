@@ -4,6 +4,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { getApplication } from "@/lib/client/storage";
 import u from "./ui.module.css";
+import h from "./home.module.css";
 
 export default function Home() {
   const [app, setApp] = useState(undefined); // undefined = not loaded yet
@@ -23,15 +24,31 @@ export default function Home() {
           </div>
         </section>
       ) : (
-        <section className="fade-in">
-          <h1 className={u.title}>Rehearse the interview before it counts.</h1>
-          <p className={u.lede}>
-            Give Javis your resume and the job you're applying for. He'll prepare questions with model
-            answers built from your experience, then interview you out loud.
-          </p>
-          <div className={u.actions}>
-            <Link href="/new" className="btn btn-primary">Start a new application</Link>
+        <section className={`${h.hero} fade-in`}>
+          <div>
+            <h1 className={u.title}>Rehearse the interview before it counts.</h1>
+            <p className={u.lede}>
+              Give Javis your resume and the job you're applying for. He'll prepare questions with model
+              answers built from your experience, then interview you out loud.
+            </p>
+            <div className={u.actions}>
+              <Link href="/new" className="btn btn-primary">Start a new application</Link>
+            </div>
           </div>
+          <ol className={h.steps} aria-label="How it works">
+            <li>
+              <span className="mono">01</span>
+              <div><strong>Prepare</strong><p>Upload your resume and the job. Get tailored questions with model answers, ten at a time.</p></div>
+            </li>
+            <li>
+              <span className="mono">02</span>
+              <div><strong>Interview</strong><p>Javis asks out loud, listens, and follows up on what you say, like a real interviewer.</p></div>
+            </li>
+            <li>
+              <span className="mono">03</span>
+              <div><strong>Review</strong><p>A scored report on what you said and how you said it, with a better version of your weakest answer.</p></div>
+            </li>
+          </ol>
         </section>
       )}
       <p className={u.note}>Technical questions are answered out loud, as in a verbal round. There is no code editor.</p>
