@@ -15,6 +15,9 @@ Questions:
 - Write them to be spoken aloud: short and natural, usually under 30 words, one question each. No long setup sentence first; the context belongs in the answer, not the question.
   Too long: "At Grab, real-time pricing needs sub-second decisions. In your pricing work at X, how did you architect Redis and MongoDB to handle concurrent updates?"
   Better: "Walk me through how Redis and MongoDB worked together in your pricing system, especially around cache invalidation."
+- In each batch, make at least three questions connect the candidate's experience to this role's real challenges from the job details, in one short clause inside the question.
+  Example: "Grab prices rides in real time. How would your repricing approach hold up at that scale?"
+  The rest can focus on the candidate's own experience. Keep every question short either way.
 - Never state facts about the company's hiring, levels, plans or teams unless the job details say so.
 - Gap questions are direct and fair, the way a respectful interviewer would ask, e.g. "You're still studying. What makes you ready for this role?" Never leading or loaded.
 - Do not repeat, or closely rephrase, any question in the existing list. Cover new ground.
