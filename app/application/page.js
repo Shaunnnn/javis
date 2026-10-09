@@ -20,6 +20,8 @@ function List({ label, items }) {
   );
 }
 
+const tidy = (t = "") => (t === t.toLowerCase() ? t.replace(/\b\w/g, (c) => c.toUpperCase()) : t);
+
 export default function Application() {
   const [app, setApp] = useState(undefined);
   useEffect(() => setApp(getApplication()), []);
@@ -39,8 +41,8 @@ export default function Application() {
   return (
     <main className={u.shell}>
       <Header right={<Link href="/new">New application</Link>} />
-      <p className={u.sectionLabel} style={{ marginTop: "var(--space-6)" }}>{app.company}</p>
-      <h1 className={u.title} style={{ marginTop: 0 }}>{app.position}</h1>
+      <p className={u.sectionLabel} style={{ marginTop: "var(--space-6)" }}>{tidy(app.company)}</p>
+      <h1 className={u.title} style={{ marginTop: 0 }}>{tidy(app.position)}</h1>
       <p className={u.lede}>
         {p.candidate_name ? `${p.candidate_name}, here` : "Here"} is how your experience lines up with the role.
         Every question Javis prepares builds on this.

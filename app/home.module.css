@@ -1,8 +1,11 @@
-.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-6); align-items: center; margin-top: var(--space-6); }
+.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-6); align-items: center; margin-top: var(--space-5); }
 .hero h1 { margin-top: 0; }
+/* Left side starts level with "01 Prepare" instead of floating in the middle. */
+.hero > div { align-self: start; }
 
 .steps { list-style: none; margin: 0; padding: 0; }
 .steps li { display: grid; grid-template-columns: 40px 1fr; gap: var(--space-3); padding: var(--space-4) 0; border-top: var(--line); }
+.steps li:first-child { border-top: 0; padding-top: 0; }
 .steps li:last-child { border-bottom: var(--line); }
 .steps .mono, .steps span { color: var(--muted); padding-top: 3px; }
 .steps strong { font-weight: 500; }
@@ -10,4 +13,17 @@
 
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; gap: var(--space-5); }
+}
+
+/* Current application: title on the left, actions on the same line on the right. */
+.current { display: grid; grid-template-columns: 1fr auto; column-gap: var(--space-5); align-items: center; margin-top: var(--space-6); padding-bottom: var(--space-5); border-bottom: var(--line); }
+.currentLabel { grid-column: 1; grid-row: 1; margin: 0 0 var(--space-2); }
+.currentTitle { grid-column: 1; grid-row: 2; margin: 0; max-width: none; }
+.currentCompany { grid-column: 1; grid-row: 3; margin: var(--space-1) 0 0; }
+.currentActions { grid-column: 2; grid-row: 2; display: flex; gap: var(--space-3); }
+.currentActions :global(.btn) { height: 52px; display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
+
+@media (max-width: 760px) {
+  .current { grid-template-columns: 1fr; }
+  .currentActions { grid-column: 1; grid-row: 4; margin-top: var(--space-4); flex-wrap: wrap; }
 }

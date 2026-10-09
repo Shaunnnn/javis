@@ -6,6 +6,9 @@ import { getApplication } from "@/lib/client/storage";
 import u from "./ui.module.css";
 import h from "./home.module.css";
 
+// "software engineer" -> "Software Engineer"; leaves mixed case like "iOS" alone.
+const tidy = (t = "") => (t === t.toLowerCase() ? t.replace(/\b\w/g, (c) => c.toUpperCase()) : t);
+
 export default function Home() {
   const [app, setApp] = useState(undefined); // undefined = not loaded yet
   useEffect(() => setApp(getApplication()), []);
@@ -14,13 +17,13 @@ export default function Home() {
     <main className={u.shell}>
       <Header />
       {app === undefined ? null : app ? (
-        <section className="fade-in">
-          <p className={u.sectionLabel} style={{ marginTop: "var(--space-6)" }}>Current application</p>
-          <h1 className={u.title} style={{ marginTop: 0 }}>{app.position}</h1>
-          <p className={u.lede}>{app.company}</p>
-          <div className={u.actions}>
-            <Link href="/application" className="btn btn-primary">Continue</Link>
+        <section className={`${h.current} fade-in`}>
+          <p className={`${u.sectionLabel} ${h.currentLabel}`}>Current application</p>
+          <h1 className={`${u.title} ${h.currentTitle}`}>{tidy(app.position)}</h1>
+          <p className={`${u.lede} ${h.currentCompany}`}>{tidy(app.company)}</p>
+          <div className={h.currentActions}>
             <Link href="/new" className="btn btn-outline">Start a new application</Link>
+            <Link href="/application" className="btn btn-primary">Continue</Link>
           </div>
         </section>
       ) : (
