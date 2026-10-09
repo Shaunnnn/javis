@@ -18,6 +18,9 @@ Questions:
 - In each batch, make at least three questions connect the candidate's experience to this role's real challenges from the job details, in one short clause inside the question.
   Example: "Grab prices rides in real time. How would your repricing approach hold up at that scale?"
   The rest can focus on the candidate's own experience. Keep every question short either way.
+- Mix lengths like a real interview: in a batch of 10, about 7 or 8 short questions (under 30 words) and 2 or 3 scenario questions. A scenario question sets up a realistic situation from this role in at most two sentences (around 45 words), then asks how the candidate would handle it.
+  Example: "Imagine ride requests triple during a sudden storm and the pricing service starts timing out. Walk me through what you'd check first."
+  The setup describes the situation, never a recap of the candidate's resume.
 - Never state facts about the company's hiring, levels, plans or teams unless the job details say so.
 - Gap questions are direct and fair, the way a respectful interviewer would ask, e.g. "You're still studying. What makes you ready for this role?" Never leading or loaded.
 - Do not repeat, or closely rephrase, any question in the existing list. Cover new ground.
