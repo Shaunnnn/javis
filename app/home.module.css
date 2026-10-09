@@ -27,3 +27,4 @@
   .current { grid-template-columns: 1fr; }
   .currentActions { grid-column: 1; grid-row: 4; margin-top: var(--space-4); flex-wrap: wrap; }
 }
+.caveat { margin: var(--space-4) 0 0; max-width: 40ch; font-size: var(--text-sm); color: var(--muted); }

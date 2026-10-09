@@ -9,6 +9,8 @@ import h from "./home.module.css";
 // "software engineer" -> "Software Engineer"; leaves mixed case like "iOS" alone.
 const tidy = (t = "") => (t === t.toLowerCase() ? t.replace(/\b\w/g, (c) => c.toUpperCase()) : t);
 
+const NO_EDITOR = "Technical questions are answered out loud, as in a verbal round. There is no code editor.";
+
 export default function Home() {
   const [app, setApp] = useState(undefined); // undefined = not loaded yet
   useEffect(() => setApp(getApplication()), []);
@@ -37,6 +39,7 @@ export default function Home() {
             <div className={u.actions}>
               <Link href="/new" className="btn btn-primary">Start a new application</Link>
             </div>
+            <p className={h.caveat}>{NO_EDITOR}</p>
           </div>
           <ol className={h.steps} aria-label="How it works">
             <li>
@@ -54,7 +57,7 @@ export default function Home() {
           </ol>
         </section>
       )}
-      <p className={u.note}>Technical questions are answered out loud, as in a verbal round. There is no code editor.</p>
+      {app && <p className={u.note}>{NO_EDITOR}</p>}
     </main>
   );
 }
