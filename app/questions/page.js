@@ -37,6 +37,7 @@ function cleanBatch(raw, existing) {
       type,
       model_answer: q.model_answer.trim(),
       key_points: strings(q.key_points, 6),
+      format: q.format === "scenario" ? "scenario" : "short",
       tips: Array.isArray(q.tips) ? q.tips.filter((t) => typeof t === "string").slice(0, 4) : [],
     });
   }
@@ -88,6 +89,7 @@ export default function Questions() {
             resume: app.resumeText || "(Not available as text; use the profile.)",
             existing_questions: items.length ? items.map((q) => `- ${q.question}`).join("\n") : "(none yet)",
             count: String(count),
+            scenario_count: String(count >= 8 ? 3 : count >= 4 ? 2 : 1),
           },
           model: "fast", // Flash: much quicker to start; switch to "strong" if answers need more depth
           json: true,
