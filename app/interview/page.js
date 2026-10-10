@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { loadFaceDetector, watchLevel } from "@/lib/client/media";
 import Link from "next/link";
 import { askLLM } from "@/lib/client/api";
 import { audioContext, loadVoice, speak, prepare } from "@/lib/client/voice";
@@ -9,7 +11,17 @@ import { getApplication, getQuestions, getInterviewSettings, getSession, saveSes
 import s from "./call.module.css";
 
 // Step 4c: the live voice loop. IDLE -> SPEAKING -> LISTENING -> THINKING -> SPEAKING -> ...
-// A plain placeholder stands in for Javis's AI core (Step 5).
+// Javis appears as his AI core (Step 5) inside a video-call style screen.
+const JavisCore = dynamic(() => import("@/components/JavisCore"), { ssr: false });
+const CORE_STATE = { Speaking: "speaking", Listening: "listening", Thinking: "thinking", Joining: "thinking", Connecting: "thinking" };
+
+const Icon = {
+  mic: <svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>,
+  micOff: <svg viewBox="0 0 24 24" aria-hidden><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M4 4l16 16" /></svg>,
+  cam: <svg viewBox="0 0 24 24" aria-hidden><rect x="3" y="7" width="13" height="10" rx="2" /><path d="M16 11l5-3v8l-5-3" /></svg>,
+  camOff: <svg viewBox="0 0 24 24" aria-hidden><rect x="3" y="7" width="13" height="10" rx="2" /><path d="M16 11l5-3v8l-5-3M3 4l17 17" /></svg>,
+  person: <svg viewBox="0 0 24 24" aria-hidden><circle cx="12" cy="9" r="3.5" /><path d="M5 20c1.2-3.6 4-5.4 7-5.4s5.8 1.8 7 5.4" /></svg>,
+};
 
 const greetingFor = (h) => (h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
 const fmt = (sec) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -38,6 +50,13 @@ export default function Interview() {
   const [heard, setHeard] = useState("");
   const [youSaid, setYouSaid] = useState(""); // what Javis heard from the last answer
   const [level, setLevel] = useState(0);
+  const [power, setPower] = useState("off"); // Javis's core: off | booting | on | shutdown
+  const [muted, setMuted] = useState(false);
+  const [camOn, setCamOn] = useState(true);
+  const volumeRef = useRef(0);  // Javis's voice loudness, drives the core
+  const faceRef = useRef(null); // where your face is, so his eyes follow you
+  const videoRef = useRef(null);
+  const meterRef = useRef(null);
   const [captions, setCaptions] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [pauseMsg, setPauseMsg] = useState("");
@@ -81,7 +100,64 @@ export default function Interview() {
     const c = ctx.current;
     c.stopped = true;
     c.voice?.stop(); c.listener?.stop(); c.stopWatch?.();
+    c.stopFace?.(); c.stopMeter?.();
     c.stream?.getTracks().forEach((t) => t.stop());
+  }
+
+  // Your camera tile, your mic meter, and face tracking for Javis's eye contact.
+  async function startSelfView() {
+    const c = ctx.current;
+    c.stopMeter = watchLevel(c.ac, c.stream, (v) => meterRef.current?.style.setProperty("--mic", String(v)));
+    const v = videoRef.current;
+    if (!v || !c.stream.getVideoTracks().length) return;
+    v.srcObject = c.stream;
+    await v.play().catch(() => {});
+    try {
+      const detector = await loadFaceDetector();
+      let stop = false, last = 0;
+      const loop = (t) => {
+        if (stop) return;
+        if (t - last > 200 && v.readyState >= 2 && c.stream.getVideoTracks()[0]?.enabled) {
+          last = t;
+          const d = detector.detectForVideo(v, t).detections?.[0]?.boundingBox;
+          faceRef.current = d
+            ? { x: -(((d.originX + d.width / 2) / v.videoWidth) * 2 - 1), y: -(((d.originY + d.height / 2) / v.videoHeight) * 2 - 1) } // mirrored, like the view
+            : null;
+        }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+      c.stopFace = () => { stop = true; };
+    } catch {}
+  }
+
+  function toggleMute() {
+    const t = ctx.current.stream?.getAudioTracks()[0];
+    if (!t) return;
+    t.enabled = !t.enabled;
+    setMuted(!t.enabled);
+  }
+  function toggleCam() {
+    const t = ctx.current.stream?.getVideoTracks()[0];
+    if (!t) return;
+    t.enabled = !t.enabled;
+    if (!t.enabled) faceRef.current = null;
+    setCamOn(t.enabled);
+  }
+
+  // Reads Javis's voice loudness while he speaks, for the core's pulse.
+  function trackVolume(handle) {
+    if (!handle?.analyser) return;
+    const buf = new Uint8Array(handle.analyser.fftSize);
+    let raf;
+    const read = () => {
+      handle.analyser.getByteTimeDomainData(buf);
+      let sum = 0; for (const b of buf) { const x = (b - 128) / 128; sum += x * x; }
+      volumeRef.current = Math.min(1, Math.sqrt(sum / buf.length) * 5);
+      raf = requestAnimationFrame(read);
+    };
+    read();
+    handle.done.then(() => { cancelAnimationFrame(raf); volumeRef.current = 0; });
   }
 
   const save = () => saveSession(sess.current);
@@ -94,12 +170,25 @@ export default function Interview() {
     const ac = audioContext(); // this tap unlocks audio on iPhone
     c.stopped = false;
     try {
-      c.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const wantCam = c.settings.camera !== false;
+      try {
+        c.stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+          video: wantCam ? { width: 640, height: 480, facingMode: "user" } : false,
+        });
+      } catch (e) {
+        if (!wantCam) throw e;
+        c.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); // camera refused: carry on with audio
+      }
+      setCamOn(c.stream.getVideoTracks().length > 0);
     } catch {
       return pause("Javis can't hear you: the microphone is blocked. Allow it in your browser's site settings, then tap Resume.");
     }
     c.ac = ac;
     setUi({ phase: "live" });
+    startSelfView();
+    setPower("booting");
+    setTimeout(() => setPower((p) => (p === "booting" ? "on" : p)), 3000);
     if (!sess.current) {
       const plan = c.early?.plan || buildPlan(c.questions, c.settings);
       sess.current = {
@@ -132,6 +221,7 @@ export default function Interview() {
     }
     try {
       c.voice = await speak(prepared || text);
+      trackVolume(c.voice);
     } catch {
       setCaption(text); // voice failed: show the line so the interview can go on
       return;
@@ -284,6 +374,7 @@ export default function Interview() {
     save();
     cleanup();
     setStatus("Call ended");
+    setPower("shutdown");
     setUi({ phase: "ended" });
   }
 
@@ -308,12 +399,21 @@ export default function Interview() {
         <span className="mono">{fmt(elapsed)}</span>
       </header>
 
-      <section className={s.tile} data-status={status}>
+      <section className={s.tile} data-status={status} data-speaking={status === "Speaking"}>
         <div className={s.tileLabel}><span className={s.name}>Javis</span> · Interviewer</div>
         <div className={s.statusLabel}><i />{status}</div>
 
-        {/* Placeholder for Javis's AI core (Step 5) */}
-        <div className={s.placeholder} style={{ "--lvl": level }} aria-hidden><span /></div>
+        <div className={s.core}>
+          <JavisCore state={CORE_STATE[status] || "idle"} power={power} volumeRef={volumeRef} faceRef={faceRef} />
+        </div>
+
+        {/* Your self-view, bottom-right, like a real call */}
+        <div className={s.self} data-active={status === "Listening" && !muted}>
+          <video ref={videoRef} className={s.selfVideo} muted playsInline style={{ display: camOn ? "block" : "none" }} />
+          {!camOn && <div className={s.selfOff}>{Icon.person}</div>}
+          <span className={s.selfName}>You{muted ? " · muted" : ""}</span>
+          <span className={s.meter} ref={meterRef} aria-hidden><i /></span>
+        </div>
 
         {ui.phase === "join" && (
           <div className={s.center}>
@@ -362,12 +462,14 @@ export default function Interview() {
       </section>
 
       <footer className={s.controls}>
+        <button className={`${s.round} ${muted ? s.off : ""}`} onClick={toggleMute} aria-pressed={muted} title={muted ? "Unmute" : "Mute"} disabled={ui.phase !== "live" && ui.phase !== "paused"}>{muted ? Icon.micOff : Icon.mic}</button>
+        <button className={`${s.round} ${!camOn ? s.off : ""}`} onClick={toggleCam} aria-pressed={!camOn} title={camOn ? "Turn camera off" : "Turn camera on"} disabled={!ctx.current.stream?.getVideoTracks().length}>{camOn ? Icon.cam : Icon.camOff}</button>
         <button className={`${s.round} ${captions ? s.on : ""}`} onClick={() => setCaptions(!captions)} aria-pressed={captions} title="Captions">CC</button>
         {ui.phase === "live" && status === "Listening" && (
           <button className={s.round} onClick={() => ctx.current.listener?.stop()} title="I've finished my answer">Done</button>
         )}
         {(ui.phase === "live" || ui.phase === "paused") && (
-          <button className={`${s.round} ${s.end}`} onClick={() => end(true)} title="End interview">End</button>
+          <button className={s.endBtn} onClick={() => end(true)} title="End interview">End interview</button>
         )}
         {lastGap && <span className={`mono ${s.gap}`} title="Time from your answer ending to Javis replying">reply {lastGap}s</span>}
       </footer>

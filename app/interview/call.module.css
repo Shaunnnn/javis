@@ -4,7 +4,8 @@
 .top strong { display: block; font-weight: 500; }
 .top span { font-size: var(--text-sm); color: var(--muted); }
 
-.tile { position: relative; flex: 1; min-height: 440px; background: var(--panel); border: var(--line); border-radius: var(--radius); display: grid; place-items: center; overflow: hidden; }
+.tile { position: relative; flex: 1; min-height: 460px; background: var(--panel); border: 1px solid var(--hairline); border-radius: var(--radius); display: grid; place-items: center; overflow: hidden; transition: border-color var(--slow) var(--ease); }
+.tile[data-speaking="true"] { border-color: var(--brass); }
 .tileLabel { position: absolute; left: var(--space-4); top: var(--space-3); font-size: var(--text-sm); color: var(--muted); }
 .name { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--brass-light); }
 .statusLabel { position: absolute; right: var(--space-4); top: var(--space-3); font-size: var(--text-sm); color: var(--muted); }
@@ -46,3 +47,37 @@
 .youSaid { font-size: var(--text-sm) !important; color: var(--muted); margin-bottom: var(--space-3) !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .youSaid span { color: var(--sage); margin-right: 4px; }
 .ended { font-family: var(--font-display); font-weight: 600; font-size: 28px; }
+
+/* Javis's core fills his tile */
+.core { position: absolute; inset: 0; }
+.tileLabel, .statusLabel { z-index: 2; }
+.center { z-index: 3; }
+.tile[data-status="Call ended"] .center { animation: fadeLate 0.8s var(--ease) 2.4s both; } /* let the shutdown play first */
+@keyframes fadeLate { from { opacity: 0; } to { opacity: 1; } }
+
+/* Self-view (bottom-right), mirrored like a real call */
+.self { position: absolute; right: var(--space-3); bottom: var(--space-3); width: 200px; aspect-ratio: 4 / 3; background: var(--ink); border: 1px solid var(--hairline); border-radius: var(--radius); overflow: hidden; z-index: 2; transition: border-color var(--slow) var(--ease); }
+.self[data-active="true"] { border-color: var(--sage); }
+.selfVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.selfOff { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+.selfOff svg { width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.selfName { position: absolute; left: 8px; bottom: 6px; font-size: 12px; color: var(--ivory); text-shadow: 0 0 4px rgba(0,0,0,0.8); }
+.meter { position: absolute; right: 8px; bottom: 9px; width: 34px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: calc(var(--mic, 0) * 100%); background: var(--sage); transition: width 80ms linear; }
+
+/* Captions sit left of the self-view so they never overlap */
+.captions { left: var(--space-4); right: calc(200px + var(--space-3) * 2); transform: none; width: auto; z-index: 2; }
+.captions p { text-shadow: 0 1px 8px rgba(13, 21, 36, 0.9); }
+
+/* Controls */
+.round svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; display: block; margin: auto; }
+.round:disabled { opacity: 0.4; cursor: default; }
+.off { border-color: var(--muted); color: var(--muted); background: rgba(255,255,255,0.04); }
+.endBtn { height: 52px; padding: 0 22px; border-radius: 26px; border: 1px solid var(--brass); background: transparent; color: var(--brass-light); font: 500 14px var(--font-body); cursor: pointer; }
+.endBtn:hover { background: rgba(201, 165, 92, 0.1); }
+
+@media (max-width: 700px) {
+  .self { width: 120px; }
+  .captions { right: calc(120px + var(--space-3) * 2); }
+  .captions p { font-size: 16px; }
+}
