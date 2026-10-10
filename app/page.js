@@ -11,6 +11,15 @@ const JavisCore = dynamic(() => import("@/components/JavisCore"), { ssr: false }
 
 // "software engineer" -> "Software Engineer"; leaves mixed case like "iOS" alone.
 const tidy = (t = "") => (t === t.toLowerCase() ? t.replace(/\b\w/g, (c) => c.toUpperCase()) : t);
+// "AI Data Project Intern (AI Data Service and Operations - Eco & Social Creation)"
+//   -> title "AI Data Project Intern", detail "AI Data Service and Operations - Eco & Social Creation"
+function splitRole(position = "") {
+  const inBrackets = position.match(/[\(\[](.*?)[\)\]]/)?.[1] || "";
+  const title = position.replace(/\s*[\(\[].*?[\)\]]\s*/g, " ").split(/\s+[-–—|]\s+/)[0].trim() || position;
+  const rest = position.replace(/\s*[\(\[].*?[\)\]]\s*/g, " ").trim().slice(title.length).replace(/^\s*[-–—|,]\s*/, "");
+  return { title, detail: [inBrackets, rest].filter(Boolean).join(" · ") };
+}
+
 const NO_EDITOR = "Technical questions are answered out loud, as in a verbal round. There is no code editor.";
 
 const STEPS = [
@@ -46,8 +55,10 @@ export default function Home() {
             {app === undefined ? null : app ? (
               <>
                 <p className={u.sectionLabel}>Current application</p>
-                <h1 className={u.title} style={{ margin: 0 }}>{tidy(app.position)}</h1>
-                <p className={u.lede} style={{ margin: "var(--space-1) 0 0" }}>{tidy(app.company)}</p>
+                <h1 className={`${u.title} ${h.heading}`} style={{ margin: 0 }}>{tidy(splitRole(app.position).title)}</h1>
+                <p className={u.lede} style={{ margin: "var(--space-2) 0 0" }}>
+                  {[splitRole(app.position).detail, tidy(app.company)].filter(Boolean).join(" · ")}
+                </p>
                 <div className={u.actions}>
                   <Link href={getQuestions(app.id).length ? "/questions" : "/application"} className="btn btn-primary">Continue</Link>
                   <Link href="/new" className="btn btn-outline">Start a new application</Link>
@@ -55,7 +66,7 @@ export default function Home() {
               </>
             ) : (
               <>
-                <h1 className={u.title} style={{ marginTop: 0 }}>Rehearse the interview before it counts.</h1>
+                <h1 className={`${u.title} ${h.heading}`} style={{ marginTop: 0 }}>Rehearse the interview before it counts.</h1>
                 <p className={u.lede}>
                   Give Javis your resume and the job you're applying for. He'll prepare questions with model
                   answers built from your experience, then interview you out loud.

@@ -2,9 +2,10 @@
 .page { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: var(--space-4); }
 .middle { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--space-5); padding: var(--space-5) 0; }
 
-.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-6); align-items: center; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.9fr); gap: var(--space-5); align-items: center; }
 .copy { min-width: 0; }
-.caveat { margin: var(--space-4) 0 0; max-width: 40ch; font-size: var(--text-sm); color: var(--muted); }
+.heading { max-width: 22ch; }
+.caveat { margin: var(--space-4) 0 0; max-width: 60ch; font-size: var(--text-sm); color: var(--muted); }
 .javis { height: 420px; margin-right: calc(var(--space-3) * -1);
   /* Fade the edges into the page: the glow lifts the background slightly, which otherwise shows as a faint box. */
   -webkit-mask-image: radial-gradient(ellipse 50% 50% at center, #000 72%, transparent 100%);

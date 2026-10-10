@@ -1,9 +1,9 @@
 .form { margin-top: var(--space-5); }
 /* Wide form: label and hint on the left, the control on the right. */
-.field, .submit { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr; gap: var(--space-5); padding: var(--space-4) 0; border-top: var(--line); }
+.field, .submit { display: grid; grid-template-columns: minmax(240px, 1.3fr) 2fr; gap: var(--space-5); padding: var(--space-4) 0; border-top: var(--line); }
 .submit { border-top: var(--line); padding-top: var(--space-5); }
 .label { display: block; font-weight: 500; margin-bottom: var(--space-1); }
-.hint { font-size: var(--text-sm); color: var(--muted); margin: 0; max-width: 34ch; }
+.hint { font-size: var(--text-sm); color: var(--muted); margin: 0; max-width: 48ch; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 
 .input {
