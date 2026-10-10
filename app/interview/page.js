@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { loadFaceDetector, watchLevel } from "@/lib/client/media";
+import { watchLevel } from "@/lib/client/media";
+import { loadLandmarker, readFrame, createAnswerTracker, speechMetrics } from "@/lib/client/delivery";
 import Link from "next/link";
 import { askLLM } from "@/lib/client/api";
 import { audioContext, loadVoice, speak, prepare } from "@/lib/client/voice";
@@ -43,6 +44,29 @@ function opener(app, plan, settings) {
   return `${hello} This should take about ${settings.timeLimit} minutes. I'll ask around ${plan.length} questions, and I may follow up on your answers. If you'd like me to repeat a question, just ask. Before we begin, how are you feeling today?`;
 }
 
+// Quick look at the delivery numbers (the full report is Step 7).
+function DeliveryPreview({ turns }) {
+  const d = turns.filter((t) => t.role === "candidate" && !t.icebreaker && t.delivery).map((t) => t.delivery);
+  if (!d.length) return null;
+  const avg = (k) => { const v = d.map((x) => x[k]).filter((x) => typeof x === "number"); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
+  const sum = (k) => d.reduce((a, x) => a + (x[k] || 0), 0);
+  const cam = d.some((x) => x.camera);
+  const rows = [
+    cam && ["Eye contact", `${avg("eyeContactPct")}% of answer time`],
+    cam && ["Looked away", `${sum("lookAways")} times${sum("longDownLooks") ? ` · ${sum("longDownLooks")} long looks down` : ""}`],
+    cam && ["Head steadiness", `${avg("steadiness")} / 100`],
+    ["Pace", avg("wpm") ? `${avg("wpm")} words per minute` : "–"],
+    ["Filler words", `${sum("fillers")} in total`],
+    ["Average answer", `${avg("seconds")} seconds`],
+  ].filter(Boolean);
+  return (
+    <dl className={s.preview}>
+      {rows.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>))}
+      {cam && <p>Measured on your device. Your video was never recorded or sent anywhere.</p>}
+    </dl>
+  );
+}
+
 export default function Interview() {
   const [ui, setUi] = useState({ phase: "loading" }); // loading | join | live | paused | ended | missing
   const [status, setStatus] = useState("Idle");       // Speaking | Listening | Thinking | Paused
@@ -57,6 +81,7 @@ export default function Interview() {
   const faceRef = useRef(null); // where your face is, so his eyes follow you
   const videoRef = useRef(null);
   const meterRef = useRef(null);
+  const statusRef = useRef("Idle");
   const [captions, setCaptions] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [pauseMsg, setPauseMsg] = useState("");
@@ -64,6 +89,7 @@ export default function Interview() {
   const [voicePct, setVoicePct] = useState(null); // null = ready (or not started), number = still loading
 
   const ctx = useRef({}); // mutable interview state that the loop reads
+  statusRef.current = status;
   const voicePctRef = useRef(null);
   voicePctRef.current = voicePct;
   const sess = useRef(null);
@@ -113,16 +139,16 @@ export default function Interview() {
     v.srcObject = c.stream;
     await v.play().catch(() => {});
     try {
-      const detector = await loadFaceDetector();
+      // Face Landmarker: where you look, head angle and expressions. Video never leaves the device.
+      const landmarker = await loadLandmarker();
       let stop = false, last = 0;
       const loop = (t) => {
         if (stop) return;
-        if (t - last > 200 && v.readyState >= 2 && c.stream.getVideoTracks()[0]?.enabled) {
+        if (t - last > 120 && v.readyState >= 2 && c.stream.getVideoTracks()[0]?.enabled) {
           last = t;
-          const d = detector.detectForVideo(v, t).detections?.[0]?.boundingBox;
-          faceRef.current = d
-            ? { x: -(((d.originX + d.width / 2) / v.videoWidth) * 2 - 1), y: -(((d.originY + d.height / 2) / v.videoHeight) * 2 - 1) } // mirrored, like the view
-            : null;
+          const sig = readFrame(landmarker.detectForVideo(v, t), v);
+          faceRef.current = sig.face ? sig.facePos : null; // Javis's eyes follow you
+          if (statusRef.current === "Listening") c.tracker?.add(sig, t); // only score while you answer
         }
         requestAnimationFrame(loop);
       };
@@ -244,12 +270,14 @@ export default function Interview() {
     setHeard("");
     setYouSaid("");
     c.replyStarted = false;
+    c.tracker = createAnswerTracker();
     c.listener = listenForAnswer({
       ac: c.ac, stream: c.stream, noSpeechMs,
       onLevel: setLevel,
       onInterim: setHeard,
     });
     const answer = await c.listener.result;
+    answer.face = c.tracker?.finish() || null;
     setLevel(0);
     if (c.stopped) return;
     if (answer.reason === "silence") {
@@ -330,6 +358,7 @@ export default function Interview() {
     if (c.stopped) return;
 
     if (r.transcript && answer.audio) { candidateTurn.text = r.transcript; S.turns[S.turns.length - 1] = candidateTurn; setYouSaid(r.transcript); }
+    S.turns[S.turns.length - 1].delivery = { ...(answer.face || {}), ...speechMetrics(S.turns[S.turns.length - 1].text, answer.seconds || 0), camera: !!answer.face };
     S.turns[S.turns.length - 1].score = r.private_score;
     S.turns[S.turns.length - 1].notes = r.notes;
 
@@ -435,6 +464,7 @@ export default function Interview() {
               {fmt(Math.round(((S?.endedAt || Date.now()) - (S?.startedAt || Date.now())) / 1000))} ·{" "}
               {new Set((S?.turns || []).filter((t) => t.role === "candidate" && !t.icebreaker).map((t) => t.qIndex)).size} of {total} questions answered
             </p>
+            <DeliveryPreview turns={S?.turns || []} />
             <p style={{ color: "var(--muted)" }}>Your full report arrives in Step 7.</p>
             <Link className="btn btn-outline" href="/questions">Back to questions</Link>
           </div>
