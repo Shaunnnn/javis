@@ -23,6 +23,8 @@ Questions:
 - format "scenario": sets up a realistic situation from this role in one or two sentences (35 to 50 words in total), then asks how the candidate would handle it.
   Example: "Imagine ride requests triple during a sudden storm and the pricing service starts timing out. Walk me through what you'd check first."
   The setup describes the situation, never a recap of the candidate's resume.
+- First batch only (the existing list says "(none yet)"): include the questions almost every interview asks, each as format "short": "Tell me about yourself", "Why do you want to work at {company}?", "Why this role?", and one strengths or growth question (e.g. "What's an area you're working to improve?"). Word them naturally. Later batches never repeat them.
+- Questions about the candidate's projects start broad, the way an interviewer opens a topic ("Tell me about Stock Watcher. What problem were you solving?"), not with an obscure implementation detail. Specific details are for follow-up questions in the live interview.
 - Never state facts about the company's hiring, levels, plans or teams unless the job details say so.
 - Gap questions are direct and fair, the way a respectful interviewer would ask, e.g. "You're still studying. What makes you ready for this role?" Never leading or loaded.
 - Do not repeat, or closely rephrase, any question in the existing list. Cover new ground.
