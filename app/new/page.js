@@ -8,6 +8,8 @@ import { saveApplication } from "@/lib/client/storage";
 import u from "../ui.module.css";
 import s from "./new.module.css";
 
+const STAGES = ["Reading your resume", "Reading the job posting", "Javis is reviewing your resume against the role"];
+
 const Req = () => <span className={s.req} aria-label="required">*</span>;
 
 function FilePicker({ id, accept, file, onChange, label }) {
@@ -44,7 +46,7 @@ export default function NewApplication() {
     const files = [];
     try {
       // 1. Resume
-      setStatus("Reading your resume…");
+      setStatus(STAGES[0]);
       let resumeText = "";
       if (resume.type === "application/pdf" || /\.pdf$/i.test(resume.name)) {
         resumeText = await pdfToText(resume);
@@ -61,7 +63,7 @@ export default function NewApplication() {
       // 2. Job details
       let jobText = "";
       if (jobMode === "link") {
-        setStatus("Reading the job posting…");
+        setStatus(STAGES[1]);
         const page = await fetchJobPage(link);
         if (!page.ok) {
           setJobMode("screenshot");
@@ -76,7 +78,7 @@ export default function NewApplication() {
       }
 
       // 3. Analysis
-      setStatus("Javis is reviewing your resume against the role…");
+      setStatus(STAGES[2]);
       const profile = await askLLM({
         prompt: "analysis",
         vars: {
@@ -178,7 +180,21 @@ export default function NewApplication() {
           <span />
           <div>
             <button className="btn btn-primary" type="submit" disabled={!ready}>Analyse</button>
-            {status && <p className={s.status} role="status">{status}</p>}
+            {status && (
+              <ol className={s.stages} role="status" aria-live="polite">
+                {STAGES.map((label, i) => {
+                  const at = STAGES.indexOf(status);
+                  const state = i < at ? "done" : i === at ? "now" : "next";
+                  return (
+                    <li key={label} className={s[state]}>
+                      {state === "done" ? "✓ " : ""}{label}
+                      {state === "now" && <span className={s.dots} aria-hidden><i>.</i><i>.</i><i>.</i></span>}
+                    </li>
+                  );
+                })}
+                <li className={s.note}>Usually takes 5 to 15 seconds.</li>
+              </ol>
+            )}
             {error && <p className={u.error} role="alert">{error}</p>}
           </div>
         </div>

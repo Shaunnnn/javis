@@ -1,0 +1,40 @@
+/* Shared by the interview setup and device check screens. */
+.row { display: grid; grid-template-columns: minmax(200px, 1fr) 2fr; gap: var(--space-5); align-items: center; padding: var(--space-4) 0; border-top: var(--line); }
+.row > div:last-child > :first-child { margin-top: 0; }
+.row:last-of-type { border-bottom: var(--line); }
+.label { font-weight: 500; display: block; }
+.hint { font-size: var(--text-sm); color: var(--muted); margin: var(--space-1) 0 0; max-width: 34ch; }
+
+.choices { display: grid; gap: var(--space-2); }
+.choice { display: grid; grid-template-columns: 18px 1fr; gap: var(--space-3); align-items: start; padding: var(--space-2) 0; cursor: pointer; }
+.choice input { margin-top: 5px; accent-color: var(--brass); }
+.choice strong { font-weight: 500; }
+.choice span span { display: block; font-size: var(--text-sm); color: var(--muted); }
+.choiceOff { opacity: 0.5; cursor: default; }
+
+.inline { display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.inline .choice { grid-template-columns: 18px auto; }
+
+.footer { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-4); margin-top: var(--space-5); flex-wrap: wrap; }
+.footer :global(.btn) { height: 52px; display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
+.footNote { font-size: var(--text-sm); color: var(--muted); margin-right: auto; }
+
+/* Device check */
+.status { font-size: var(--text-sm); color: var(--muted); }
+.ok { color: var(--sage); }
+.bad { color: var(--danger); }
+.meter { height: 6px; background: var(--hairline); border-radius: var(--radius); overflow: hidden; margin: 0 0 var(--space-2); max-width: 420px; }
+.meter i { display: block; height: 100%; background: var(--sage); transition: width 80ms linear; }
+.video { width: 100%; max-width: 420px; aspect-ratio: 4 / 3; background: var(--panel); border: var(--line); border-radius: var(--radius); object-fit: cover; transform: scaleX(-1); display: block; margin-bottom: var(--space-2); }
+.actions { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; margin-top: var(--space-2); }
+.help { margin: var(--space-3) 0 0; padding-left: var(--space-3); border-left: 1px solid var(--danger); font-size: var(--text-sm); max-width: 60ch; }
+.help ol { margin: var(--space-1) 0 0; padding-left: 1.2em; }
+
+@media (max-width: 760px) { .row { grid-template-columns: 1fr; gap: var(--space-3); } }
+
+/* "Getting ready..." animated dots */
+.dots i { font-style: normal; opacity: 0.2; animation: dot 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot { 0%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+.rowTop { align-items: start; }

@@ -175,6 +175,11 @@ export default function Questions() {
           {items.length > 0 && (
             <button className="btn btn-outline" type="button" onClick={() => window.print()}>Export PDF</button>
           )}
+          {items.length > 0 && (
+            <Link className="btn btn-outline" href={selected ? "/interview/setup?mode=targeted" : "/interview/setup"}>
+              {selected ? `Practise ${selected} selected` : "Practise interview"}
+            </Link>
+          )}
           <button className="btn btn-primary" type="button" onClick={generate} disabled={busy || atCap}>
             {busy ? (progress?.done ? `Writing ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…` : "Thinking…") : items.length ? `Generate ${Math.min(BATCH, CAP - items.length)} more` : "Generate 10 questions"}
           </button>
