@@ -9,7 +9,7 @@ import { askLLM } from "@/lib/client/api";
 import { audioContext, loadVoice, speak, prepare } from "@/lib/client/voice";
 import { listenForAnswer, watchForInterruption } from "@/lib/client/listen";
 import { buildPlan } from "@/lib/client/interview-plan";
-import { getApplication, getQuestions, getInterviewSettings, getSession, saveSession, clearSession } from "@/lib/client/storage";
+import { getApplication, getQuestions, getInterviewSettings, getSession, saveSession, clearSession, getPrefs } from "@/lib/client/storage";
 import s from "./call.module.css";
 
 // Step 4c: the live voice loop. IDLE -> SPEAKING -> LISTENING -> THINKING -> SPEAKING -> ...
@@ -35,8 +35,14 @@ function spokenRole(position = "") {
   return r || position;
 }
 
+// How Javis addresses you (Settings): your name by default, or "sir" / "ma'am".
+function addressFor(app) {
+  const a = getPrefs().address;
+  return a === "sir" ? "sir" : a === "maam" ? "ma'am" : app.profile?.candidate_name || "there";
+}
+
 function opener(app, plan, settings) {
-  const name = app.profile?.candidate_name || "there";
+  const name = addressFor(app);
   const first = plan[0]?.surprise ? "Let's start. Tell me about yourself." : `Let's start. ${plan[0].question}`;
   const hello = `${greetingFor(new Date().getHours())}, ${name}. I'm Javis, and I'll be conducting your interview today for the ${spokenRole(app.position)} role at ${app.company}.`;
   if (settings.mode === "targeted") {
@@ -85,6 +91,7 @@ export default function Interview() {
   const meterRef = useRef(null);
   const statusRef = useRef("Idle");
   const [captions, setCaptions] = useState(true);
+  useEffect(() => setCaptions(getPrefs().captions), []); // default from Settings
   const [elapsed, setElapsed] = useState(0);
   const [pauseMsg, setPauseMsg] = useState("");
   const [lastGap, setLastGap] = useState(null);
@@ -336,6 +343,7 @@ export default function Interview() {
         prompt: "javis-interviewer",
         vars: {
           name: c.app.profile?.candidate_name || "the candidate",
+          address: getPrefs().address === "name" ? `their name (${c.app.profile?.candidate_name || "if known"})` : getPrefs().address === "sir" ? '"sir"' : '"ma\'am"',
           company: c.app.company, position: spokenRole(c.app.position),
           style: S.settings.style, mode: S.settings.mode === "targeted" ? "targeted practice" : "full mock interview",
           time_left: String(minutesLeft),
@@ -396,7 +404,7 @@ export default function Interview() {
     const c = ctx.current;
     if (early) {
       c.voice?.stop(); c.listener?.stop();
-      const line = `Of course. Thank you for your time, ${c.app.profile?.candidate_name || ""}. We'll stop there.`.replace(" .", ".");
+      const line = `Of course. Thank you for your time, ${addressFor(c.app)}. We'll stop there.`;
       sess.current.turns.push({ role: "javis", text: line, action: "wrap_up" });
       await say(line);
     }

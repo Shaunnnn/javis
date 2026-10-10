@@ -19,7 +19,9 @@
 .steps strong { font-weight: 500; }
 .steps p { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--text-sm); max-width: 36ch; }
 
-.footer { padding-top: var(--space-3); border-top: var(--line); font-size: var(--text-sm); color: var(--muted); }
+.footer { display: flex; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-3); border-top: var(--line); font-size: var(--text-sm); color: var(--muted); }
+.footer a { color: var(--muted); }
+.footer a:hover { color: var(--ivory); }
 
 @media (max-width: 860px) {
   .hero { grid-template-columns: 1fr; }

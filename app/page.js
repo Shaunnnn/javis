@@ -98,6 +98,7 @@ export default function Home() {
 
       <footer className={h.footer}>
         <span>Stored only in this browser · Analysed with Google Gemini</span>
+        <Link href="/settings">Settings</Link>
       </footer>
     </main>
   );
