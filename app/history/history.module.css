@@ -1,0 +1,14 @@
+.muted { color: var(--muted); font-size: var(--text-sm); margin: 0 0 var(--space-2); }
+.trend { width: 100%; max-width: 600px; height: auto; display: block; }
+.base { stroke: var(--hairline); }
+.line { fill: none; stroke: var(--brass); stroke-width: 1.5; }
+.dot { fill: var(--brass-light); }
+.val { fill: var(--ivory); font: 11px var(--font-mono); }
+.list { list-style: none; margin: 0; padding: 0; border-top: var(--line); }
+.row { display: grid; grid-template-columns: 130px 1fr auto 64px; gap: var(--space-4); align-items: baseline; padding: var(--space-3) 0; border-bottom: var(--line); color: var(--ivory); text-decoration: none; }
+.row:hover .role { color: var(--brass-light); }
+.date { color: var(--muted); }
+.role span { color: var(--muted); }
+.sub { color: var(--muted); }
+.score { font-size: 28px; text-align: right; }
+@media (max-width: 700px) { .row { grid-template-columns: 1fr auto; } .date, .sub { grid-column: 1 / -1; } }

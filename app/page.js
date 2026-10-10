@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
-import { getApplication, getQuestions } from "@/lib/client/storage";
+import { getApplication, getQuestions, getHistory } from "@/lib/client/storage";
 import u from "./ui.module.css";
 import h from "./home.module.css";
 
@@ -31,11 +31,13 @@ const STEPS = [
 export default function Home() {
   const [app, setApp] = useState(undefined); // undefined = not loaded yet
   const [power, setPower] = useState("off");
+  const [hasHistory, setHasHistory] = useState(false);
   const faceRef = useRef(null);
   const volumeRef = useRef(0);
 
   useEffect(() => {
     setApp(getApplication());
+    setHasHistory(getHistory().length > 0);
     // Javis boots up as the page opens, then idles.
     const a = setTimeout(() => setPower("booting"), 300);
     const b = setTimeout(() => setPower("on"), 3400);
@@ -47,7 +49,7 @@ export default function Home() {
 
   return (
     <main className={`${u.shell} ${h.page}`}>
-      <Header />
+      <Header right={hasHistory ? <Link href="/history">History</Link> : null} />
 
       <div className={h.middle}>
         <section className={`${h.hero} fade-in`}>

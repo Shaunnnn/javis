@@ -1,0 +1,69 @@
+.top { display: grid; grid-template-columns: 1fr auto; gap: var(--space-5); align-items: end; margin-top: var(--space-6); }
+.title { margin: 0; }
+.scoreBlock { text-align: right; }
+.big { font-size: var(--text-score); line-height: 1; display: flex; align-items: baseline; justify-content: flex-end; gap: var(--space-2); }
+.big small { font-size: var(--text-sm); color: var(--muted); }
+.split { color: var(--muted); margin-top: var(--space-3); }
+.note { font-size: var(--text-sm); color: var(--muted); margin: var(--space-3) 0 var(--space-4); max-width: 90ch; }
+.muted { color: var(--muted); font-size: var(--text-sm); margin: 0 0 var(--space-2); }
+.h2 { font-family: var(--font-body); font-weight: 500; font-size: 18px; margin: 0 0 var(--space-3); }
+.list { margin: 0; padding: 0; list-style: none; }
+.list li { padding: var(--space-2) 0; border-top: var(--line); }
+.list li:first-child { border-top: 0; }
+.good::before { content: "+ "; color: var(--sage); }
+.work::before { content: "– "; color: var(--muted); }
+
+.questions { list-style: none; margin: 0; padding: 0; }
+.q { padding: var(--space-4) 0; border-top: var(--line); }
+.q:first-child { border-top: 0; padding-top: 0; }
+.qHead { display: grid; grid-template-columns: 36px 1fr auto; gap: var(--space-3); align-items: baseline; }
+.qHead > span:first-child { color: var(--muted); }
+.qText { margin: 0; font-weight: 500; font-size: 18px; }
+.qScore { color: var(--ivory); }
+.crit { margin: var(--space-3) 0 0 calc(36px + var(--space-3)); display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3) var(--space-5); }
+.crit dt { font-size: var(--text-sm); color: var(--muted); }
+.crit dt span { color: var(--ivory); margin-left: 4px; }
+.crit dd { margin: 2px 0 0; font-size: var(--text-sm); }
+.missed { margin: var(--space-3) 0 0 calc(36px + var(--space-3)); padding-left: var(--space-3); border-left: 1px solid var(--sage); font-size: var(--text-sm); }
+.missed span { color: var(--muted); }
+.missed ul { margin: var(--space-1) 0 0; padding-left: 1.1em; }
+.better { margin: 0; padding-left: var(--space-4); border-left: 1px solid var(--sage); max-width: 80ch; white-space: pre-line; }
+
+.measures { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
+.measure { display: grid; gap: 2px; padding-top: var(--space-2); border-top: var(--line); }
+.measure strong { font-size: 22px; font-weight: 400; color: var(--ivory); }
+.target { font-size: 12px; color: var(--muted); }
+.mScore { font-size: 12px; color: var(--sage); }
+.chart { width: 100%; max-width: 560px; height: auto; display: block; }
+.band { fill: var(--sage); opacity: 0.12; }
+.bar { fill: var(--brass); }
+.val { fill: var(--ivory); font: 11px var(--font-mono); }
+.axis { fill: var(--muted); font: 11px var(--font-mono); }
+.baseline { stroke: var(--hairline); }
+
+.replayHead { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.chat { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.chat li { max-width: 78ch; padding: var(--space-2) var(--space-3); border-left: 1px solid var(--hairline); }
+.chat p { margin: 2px 0 0; }
+.javis { border-left-color: var(--brass) !important; }
+.you { margin-left: auto; border-left-color: var(--sage) !important; }
+.who { font-size: 12px; color: var(--muted); }
+.chip { display: inline-block; margin-top: var(--space-1); font-size: 12px; color: var(--sage); }
+
+.generating { margin-top: var(--space-6); }
+.stages { list-style: none; padding: 0; margin: var(--space-4) 0; }
+.stages li { padding: 3px 0; }
+.done { color: var(--sage); }
+.now { color: var(--brass-light); }
+.next { color: var(--muted); opacity: 0.6; }
+.dots i { font-style: normal; opacity: 0.2; animation: dot 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot { 0%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+@media (max-width: 760px) {
+  .top { grid-template-columns: 1fr; }
+  .scoreBlock { text-align: left; }
+  .big { justify-content: flex-start; }
+  .crit, .missed { margin-left: 0; }
+}

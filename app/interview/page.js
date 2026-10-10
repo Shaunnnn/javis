@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { watchLevel } from "@/lib/client/media";
 import { loadLandmarker, readFrame, createAnswerTracker, speechMetrics } from "@/lib/client/delivery";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { askLLM } from "@/lib/client/api";
 import { audioContext, loadVoice, speak, prepare } from "@/lib/client/voice";
 import { listenForAnswer, watchForInterruption } from "@/lib/client/listen";
@@ -68,6 +69,7 @@ function DeliveryPreview({ turns }) {
 }
 
 export default function Interview() {
+  const router = useRouter();
   const [ui, setUi] = useState({ phase: "loading" }); // loading | join | live | paused | ended | missing
   const [status, setStatus] = useState("Idle");       // Speaking | Listening | Thinking | Paused
   const [caption, setCaption] = useState("");
@@ -405,6 +407,9 @@ export default function Interview() {
     setStatus("Call ended");
     setPower("shutdown");
     setUi({ phase: "ended" });
+    // Let the shutdown and the summary show for a moment, then on to the report.
+    const answered = sess.current.turns.some((t) => t.role === "candidate" && !t.icebreaker);
+    if (answered) setTimeout(() => router.push(`/report?id=${sess.current.id}`), 6000);
   }
 
   // ---------- screen ----------
@@ -465,8 +470,8 @@ export default function Interview() {
               {new Set((S?.turns || []).filter((t) => t.role === "candidate" && !t.icebreaker).map((t) => t.qIndex)).size} of {total} questions answered
             </p>
             <DeliveryPreview turns={S?.turns || []} />
-            <p style={{ color: "var(--muted)" }}>Your full report arrives in Step 7.</p>
-            <Link className="btn btn-outline" href="/questions">Back to questions</Link>
+            <p style={{ color: "var(--muted)" }}>Preparing your report…</p>
+            <Link className="btn btn-primary" href={`/report?id=${S?.id}`}>View report now</Link>
           </div>
         )}
 

@@ -163,7 +163,7 @@ export default function Questions() {
 
   return (
     <main className={u.shell}>
-      <Header right={<Link href="/application">Back to analysis</Link>} />
+      <Header right={<><Link href="/history">History</Link> · <Link href="/application">Analysis</Link></>} />
 
       <section className={s.top}>
         <div>
