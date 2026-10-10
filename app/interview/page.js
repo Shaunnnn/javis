@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { askLLM } from "@/lib/client/api";
-import { audioContext, loadVoice, speak } from "@/lib/client/voice";
+import { audioContext, loadVoice, speak, prepare } from "@/lib/client/voice";
 import { listenForAnswer, watchForInterruption } from "@/lib/client/listen";
 import { buildPlan } from "@/lib/client/interview-plan";
 import { getApplication, getQuestions, getInterviewSettings, getSession, saveSession, clearSession } from "@/lib/client/storage";
@@ -14,10 +14,17 @@ import s from "./call.module.css";
 const greetingFor = (h) => (h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening");
 const fmt = (sec) => `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
+// How a person would say the role aloud: drop bracketed details and long tails.
+// "AI Data Project Intern (AI Data Service and Operations - Eco & Social Creation)" -> "AI Data Project Intern"
+function spokenRole(position = "") {
+  let r = position.replace(/\s*[\(\[].*?[\)\]]\s*/g, " ").split(/\s+[-–—|]\s+|,\s+/)[0].trim();
+  return r || position;
+}
+
 function opener(app, plan, settings) {
   const name = app.profile?.candidate_name || "there";
   const first = plan[0]?.surprise ? "Let's start. Tell me about yourself." : `Let's start. ${plan[0].question}`;
-  const hello = `${greetingFor(new Date().getHours())}, ${name}. I'm Javis, and I'll be conducting your interview today for the ${app.position} role at ${app.company}.`;
+  const hello = `${greetingFor(new Date().getHours())}, ${name}. I'm Javis, and I'll be conducting your interview today for the ${spokenRole(app.position)} role at ${app.company}.`;
   if (settings.mode === "targeted") {
     return `${hello} We'll go through the ${plan.length} question${plan.length > 1 ? "s" : ""} you selected. ${first}`;
   }
@@ -29,13 +36,17 @@ export default function Interview() {
   const [status, setStatus] = useState("Idle");       // Speaking | Listening | Thinking | Paused
   const [caption, setCaption] = useState("");
   const [heard, setHeard] = useState("");
+  const [youSaid, setYouSaid] = useState(""); // what Javis heard from the last answer
   const [level, setLevel] = useState(0);
   const [captions, setCaptions] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [pauseMsg, setPauseMsg] = useState("");
   const [lastGap, setLastGap] = useState(null);
+  const [voicePct, setVoicePct] = useState(null); // null = ready (or not started), number = still loading
 
   const ctx = useRef({}); // mutable interview state that the loop reads
+  const voicePctRef = useRef(null);
+  voicePctRef.current = voicePct;
   const sess = useRef(null);
 
   useEffect(() => {
@@ -44,8 +55,16 @@ export default function Interview() {
     const saved = getSession();
     ctx.current = { app, settings: getInterviewSettings(), questions: getQuestions(app.id) };
     if (saved && saved.appId === app.id && saved.status === "live") { sess.current = saved; setUi({ phase: "join", resume: true }); }
-    else setUi({ phase: "join", resume: false });
-    loadVoice().catch(() => {});
+    else {
+      setUi({ phase: "join", resume: false });
+      // Build the plan and generate the greeting now, so Javis speaks the moment Start is pressed.
+      const plan = buildPlan(ctx.current.questions, ctx.current.settings);
+      const line = opener(app, plan, ctx.current.settings);
+      ctx.current.early = { plan, line, audio: prepare(line) };
+      ctx.current.early.audio.buffers.forEach((b) => b.catch(() => {}));
+    }
+    let ready = false;
+    loadVoice((pct) => { if (!ready) setVoicePct(pct); }).then(() => { ready = true; setVoicePct(null); }).catch(() => {});
     return () => cleanup();
   }, []);
 
@@ -80,15 +99,16 @@ export default function Interview() {
     c.ac = ac;
     setUi({ phase: "live" });
     if (!sess.current) {
-      const plan = buildPlan(c.questions, c.settings);
+      const plan = c.early?.plan || buildPlan(c.questions, c.settings);
       sess.current = {
         id: crypto.randomUUID(), appId: c.app.id, status: "live", startedAt: Date.now(),
         settings: c.settings, plan, index: 0, followUps: 0, turns: [],
       };
-      const line = opener(c.app, plan, c.settings);
+      const line = c.early?.line || opener(c.app, plan, c.settings);
       sess.current.turns.push({ role: "javis", text: line, qIndex: 0 });
       save();
-      await say(line);
+      await say(line, { label: "Joining", prepared: c.early?.audio });
+      c.early = null;
     } else {
       const last = [...sess.current.turns].reverse().find((t) => t.role === "javis");
       await say(`Apologies for the interruption. ${last?.text || "Shall we continue?"}`);
@@ -96,18 +116,25 @@ export default function Interview() {
     listen();
   }
 
-  async function say(text) {
+  async function say(text, { label = "Thinking", prepared } = {}) {
     const c = ctx.current;
     if (c.stopped) return;
-    setStatus("Thinking"); // voice is being prepared
-    setCaption(text);
+    setStatus(label); // voice is being prepared
+    setCaption(""); // captions appear when he starts speaking, not before
+    if (voicePctRef.current !== null) {
+      setStatus("Connecting");
+      await loadVoice().catch(() => {}); // first visit or private window: wait for the voice model
+      setStatus(label);
+    }
     try {
-      c.voice = await speak(text);
+      c.voice = await speak(prepared || text);
     } catch {
-      return; // voice failed: captions still show the line
+      setCaption(text); // voice failed: show the line so the interview can go on
+      return;
     }
     if (c.thinkingSince) { setLastGap(((performance.now() - c.thinkingSince) / 1000).toFixed(1)); c.thinkingSince = null; }
     setStatus("Speaking");
+    setCaption(text);
     let interrupted = false;
     c.stopWatch = watchForInterruption({ ac: c.ac, stream: c.stream, onInterrupt: () => { interrupted = true; c.voice?.stop(); } });
     await c.voice.done;
@@ -120,6 +147,7 @@ export default function Interview() {
     if (c.stopped) return;
     setStatus("Listening");
     setHeard("");
+    setYouSaid("");
     c.listener = listenForAnswer({
       ac: c.ac, stream: c.stream, noSpeechMs,
       onLevel: setLevel,
@@ -138,6 +166,7 @@ export default function Interview() {
     const S = sess.current;
     setStatus("Thinking");
     const candidateTurn = { role: "candidate", text: answer.text || "(spoken answer)", qIndex: S.index };
+    if (answer.text) setYouSaid(answer.text); // Chrome: known straight away
     if (!retried) { S.turns.push(candidateTurn); save(); }
     const plan = S.plan;
     const cur = plan[S.index] || {};
@@ -154,7 +183,7 @@ export default function Interview() {
         prompt: "javis-interviewer",
         vars: {
           name: c.app.profile?.candidate_name || "the candidate",
-          company: c.app.company, position: c.app.position,
+          company: c.app.company, position: spokenRole(c.app.position),
           style: S.settings.style, mode: S.settings.mode === "targeted" ? "targeted practice" : "full mock interview",
           time_left: String(minutesLeft),
           profile: c.app.profile,
@@ -175,7 +204,7 @@ export default function Interview() {
     }
     if (c.stopped) return;
 
-    if (r.transcript && answer.audio) { candidateTurn.text = r.transcript; S.turns[S.turns.length - 1] = candidateTurn; }
+    if (r.transcript && answer.audio) { candidateTurn.text = r.transcript; S.turns[S.turns.length - 1] = candidateTurn; setYouSaid(r.transcript); }
     S.turns[S.turns.length - 1].score = r.private_score;
     S.turns[S.turns.length - 1].notes = r.notes;
 
@@ -270,9 +299,23 @@ export default function Interview() {
           </div>
         )}
 
-        {captions && ui.phase === "live" && (
+        {ui.phase === "live" && status === "Connecting" && (
+          <div className={s.loadingNote}>
+            Javis is joining the call{voicePct ? ` · loading voice ${voicePct}%` : ""}
+            <span className={s.dots} aria-hidden><i>.</i><i>.</i><i>.</i></span>
+          </div>
+        )}
+        {ui.phase === "join" && voicePct !== null && (
+          <div className={s.loadingNote}>Preparing Javis's voice{voicePct ? ` · ${voicePct}%` : ""}<span className={s.dots} aria-hidden><i>.</i><i>.</i><i>.</i></span></div>
+        )}
+        {captions && ui.phase === "live" && status !== "Connecting" && (
           <div className={s.captions}>
-            {status === "Listening" && heard ? <p className={s.you}>{heard}</p> : caption ? <p>{caption}</p> : null}
+            {status === "Listening" && heard ? <p className={s.you}>{heard}</p> : (
+              <>
+                {youSaid && status !== "Listening" && <p className={s.youSaid}><span>You said</span> {youSaid}</p>}
+                {caption && <p>{caption}</p>}
+              </>
+            )}
           </div>
         )}
       </section>

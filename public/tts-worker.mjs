@@ -29,6 +29,8 @@ let queue = Promise.resolve(); // one generation at a time
 function load(warmVoice) {
   ttsPromise ??= (async () => {
     const { KokoroTTS } = await import(KOKORO_URL);
+    // ONNX Runtime uses several cores automatically when the page is cross-origin isolated (next.config.mjs).
+    postMessage({ type: "info", message: `cross-origin isolated: ${self.crossOriginIsolated} (multi-core voice ${self.crossOriginIsolated ? "on" : "off"})` });
     const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
       dtype: "q8",
       device: "wasm",
