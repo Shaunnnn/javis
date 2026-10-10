@@ -11,6 +11,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Avoid a single word stranded on the last line of a paragraph or heading. */
+p, li, h1, h2 { text-wrap: pretty; }
+
 h1, h2, .display {
   font-family: var(--font-display);
   font-weight: 600;

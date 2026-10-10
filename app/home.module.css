@@ -1,30 +1,29 @@
-.hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: var(--space-6); align-items: center; margin-top: var(--space-5); }
-.hero h1 { margin-top: 0; }
-/* Left side starts level with "01 Prepare" instead of floating in the middle. */
-.hero > div { align-self: start; }
+/* Home fills the screen: header at the top, content in the middle, footer at the bottom. */
+.page { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: var(--space-4); }
+.middle { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--space-5); padding: var(--space-5) 0; }
 
-.steps { list-style: none; margin: 0; padding: 0; }
-.steps li { display: grid; grid-template-columns: 40px 1fr; gap: var(--space-3); padding: var(--space-4) 0; border-top: var(--line); }
-.steps li:first-child { border-top: 0; padding-top: 0; }
-.steps li:last-child { border-bottom: var(--line); }
-.steps .mono, .steps span { color: var(--muted); padding-top: 3px; }
+.hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-6); align-items: center; }
+.copy { min-width: 0; }
+.caveat { margin: var(--space-4) 0 0; max-width: 40ch; font-size: var(--text-sm); color: var(--muted); }
+.javis { height: 420px; margin-right: calc(var(--space-3) * -1);
+  /* Fade the edges into the page: the glow lifts the background slightly, which otherwise shows as a faint box. */
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at center, #000 72%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at center, #000 72%, transparent 100%); }
+
+/* The three steps: a row of three, separated by hairlines rather than boxes. */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: var(--line); }
+.steps li { padding: var(--space-4) var(--space-4) 0 0; }
+.steps li + li { padding-left: var(--space-4); border-left: var(--line); }
+.steps span { display: block; color: var(--muted); margin-bottom: var(--space-2); }
 .steps strong { font-weight: 500; }
-.steps p { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--text-sm); }
+.steps p { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--text-sm); max-width: 36ch; }
+
+.footer { padding-top: var(--space-3); border-top: var(--line); font-size: var(--text-sm); color: var(--muted); }
 
 @media (max-width: 860px) {
-  .hero { grid-template-columns: 1fr; gap: var(--space-5); }
+  .hero { grid-template-columns: 1fr; }
+  .javis { height: 280px; order: -1; margin: 0; }
+  .steps { grid-template-columns: 1fr; }
+  .steps li, .steps li + li { padding: var(--space-3) 0; border-left: 0; border-top: var(--line); }
+  .steps li:first-child { border-top: 0; }
 }
-
-/* Current application: title on the left, actions on the same line on the right. */
-.current { display: grid; grid-template-columns: 1fr auto; column-gap: var(--space-5); align-items: center; margin-top: var(--space-6); padding-bottom: var(--space-5); border-bottom: var(--line); }
-.currentLabel { grid-column: 1; grid-row: 1; margin: 0 0 var(--space-2); }
-.currentTitle { grid-column: 1; grid-row: 2; margin: 0; max-width: none; }
-.currentCompany { grid-column: 1; grid-row: 3; margin: var(--space-1) 0 0; }
-.currentActions { grid-column: 2; grid-row: 2; display: flex; gap: var(--space-3); }
-.currentActions :global(.btn) { height: 52px; display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
-
-@media (max-width: 760px) {
-  .current { grid-template-columns: 1fr; }
-  .currentActions { grid-column: 1; grid-row: 4; margin-top: var(--space-4); flex-wrap: wrap; }
-}
-.caveat { margin: var(--space-4) 0 0; max-width: 40ch; font-size: var(--text-sm); color: var(--muted); }

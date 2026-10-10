@@ -24,11 +24,11 @@
 
 .body { min-width: 0; }
 .type { font-size: var(--text-sm); color: var(--muted); }
-.question { margin: var(--space-1) 0 var(--space-2); font-size: 19px; font-weight: 500; line-height: 1.45; max-width: 64ch; }
+.question { margin: var(--space-1) 0 var(--space-2); font-size: 19px; font-weight: 500; line-height: 1.45; max-width: 72ch; }
 .reveal { font: inherit; font-size: var(--text-sm); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--hairline); }
 .reveal:hover { color: var(--ivory); }
 
-.answer { display: none; margin-top: var(--space-3); padding-left: var(--space-4); border-left: 1px solid var(--sage); max-width: 68ch; }
+.answer { display: none; margin-top: var(--space-3); padding-left: var(--space-4); border-left: 1px solid var(--sage); max-width: 74ch; }
 .itemOpen .answer { display: block; animation: fade var(--slow) var(--ease) both; }
 .subLabel { display: block; margin: var(--space-4) 0 var(--space-2); font-size: var(--text-sm); color: var(--muted); }
 .subLabel:first-child { margin-top: 0; }
