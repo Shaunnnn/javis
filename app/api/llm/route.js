@@ -88,7 +88,7 @@ function errorResponse(err) {
   const s = err?.status;
   const [status, error] =
     s === 429 ? [429, "Gemini's free-tier limit was hit. Try again in a minute."]
-    : s === 500 || s === 503 ? [503, "Gemini is very busy right now. Give it a moment and try again."]
+    : s === 500 || s === 503 || s === 504 ? [503, "Gemini is very busy right now. Give it a moment and try again."]
     : [502, "Javis couldn't reach Gemini. Try again."];
   return NextResponse.json({ error }, { status });
 }
