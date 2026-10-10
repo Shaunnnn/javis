@@ -45,3 +45,4 @@
 .tile[data-status="Joining"] .placeholder { animation: spin 3s linear infinite; border-style: dashed; opacity: 0.6; }
 .youSaid { font-size: var(--text-sm) !important; color: var(--muted); margin-bottom: var(--space-3) !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .youSaid span { color: var(--sage); margin-right: 4px; }
+.ended { font-family: var(--font-display); font-weight: 600; font-size: 28px; }

@@ -28,7 +28,7 @@ function opener(app, plan, settings) {
   if (settings.mode === "targeted") {
     return `${hello} We'll go through the ${plan.length} question${plan.length > 1 ? "s" : ""} you selected. ${first}`;
   }
-  return `${hello} This should take about ${settings.timeLimit} minutes. I'll ask around ${plan.length} questions, and I may follow up on your answers. If you'd like me to repeat a question, just ask. ${first}`;
+  return `${hello} This should take about ${settings.timeLimit} minutes. I'll ask around ${plan.length} questions, and I may follow up on your answers. If you'd like me to repeat a question, just ask. Before we begin, how are you feeling today?`;
 }
 
 export default function Interview() {
@@ -62,6 +62,8 @@ export default function Interview() {
       const line = opener(app, plan, ctx.current.settings);
       ctx.current.early = { plan, line, audio: prepare(line) };
       ctx.current.early.audio.buffers.forEach((b) => b.catch(() => {}));
+      ctx.current.fillers = ["I see.", "Right.", "Ah, okay.", "Understood."] /* real words: the voice spells out "Mm" and "Hm" */.map((f) => prepare(f));
+      ctx.current.fillers.forEach((f) => f.buffers.forEach((b) => b.catch(() => {})));
     }
     let ready = false;
     loadVoice((pct) => { if (!ready) setVoicePct(pct); }).then(() => { ready = true; setVoicePct(null); }).catch(() => {});
@@ -103,6 +105,7 @@ export default function Interview() {
       sess.current = {
         id: crypto.randomUUID(), appId: c.app.id, status: "live", startedAt: Date.now(),
         settings: c.settings, plan, index: 0, followUps: 0, turns: [],
+        icebreaker: c.settings.mode !== "targeted", // first reply is the unscored "how are you feeling"
       };
       const line = c.early?.line || opener(c.app, plan, c.settings);
       sess.current.turns.push({ role: "javis", text: line, qIndex: 0 });
@@ -119,6 +122,7 @@ export default function Interview() {
   async function say(text, { label = "Thinking", prepared } = {}) {
     const c = ctx.current;
     if (c.stopped) return;
+    clearTimeout(c.fillerTimer);
     setStatus(label); // voice is being prepared
     setCaption(""); // captions appear when he starts speaking, not before
     if (voicePctRef.current !== null) {
@@ -133,6 +137,7 @@ export default function Interview() {
       return;
     }
     if (c.thinkingSince) { setLastGap(((performance.now() - c.thinkingSince) / 1000).toFixed(1)); c.thinkingSince = null; }
+    c.replyStarted = true;
     setStatus("Speaking");
     setCaption(text);
     let interrupted = false;
@@ -148,6 +153,7 @@ export default function Interview() {
     setStatus("Listening");
     setHeard("");
     setYouSaid("");
+    c.replyStarted = false;
     c.listener = listenForAnswer({
       ac: c.ac, stream: c.stream, noSpeechMs,
       onLevel: setLevel,
@@ -156,9 +162,34 @@ export default function Interview() {
     const answer = await c.listener.result;
     setLevel(0);
     if (c.stopped) return;
-    if (answer.reason === "silence") return pause("Are you still there? Tap Resume when you're ready to continue.");
+    if (answer.reason === "silence") {
+      if (!c.checkedIn) {
+        c.checkedIn = true;
+        await say("Take your time. Are you still there?");
+        return listen();
+      }
+      c.checkedIn = false;
+      return pause("Javis paused the interview because he couldn't hear you. Tap Resume when you're ready.");
+    }
+    c.checkedIn = false;
     c.thinkingSince = performance.now();
+    scheduleFiller();
     await think(answer);
+  }
+
+  // If Javis's reply isn't ready shortly after the answer ends, a short "Mm." fills the silence.
+  function scheduleFiller() {
+    const c = ctx.current;
+    clearTimeout(c.fillerTimer);
+    if (!c.fillers?.length) return;
+    // Only when the wait is noticeable, about half the time, and never twice in a row.
+    if (c.lastFiller || Math.random() < 0.5) { c.lastFiller = false; return; }
+    c.fillerTimer = setTimeout(async () => {
+      if (c.stopped || c.replyStarted) return;
+      c.lastFiller = true;
+      const f = c.fillers[Math.floor(Math.random() * c.fillers.length)];
+      try { (await speak(f)); } catch {}
+    }, 1800);
   }
 
   async function think(answer, retried = false) {
@@ -170,8 +201,10 @@ export default function Interview() {
     if (!retried) { S.turns.push(candidateTurn); save(); }
     const plan = S.plan;
     const cur = plan[S.index] || {};
+    const ice = S.icebreaker;
+    if (ice) candidateTurn.icebreaker = true;
     const minutesLeft = Math.max(0, Math.round(S.settings.timeLimit - (Date.now() - S.startedAt) / 60000));
-    const nextItem = minutesLeft < 2 ? null : plan[S.index + 1];
+    const nextItem = ice ? plan[0] : minutesLeft < 2 ? null : plan[S.index + 1];
     const nextQuestion = !nextItem
       ? "(None left. Ask whether they have any questions for you, or answer the ones they've asked.)"
       : nextItem.surprise ? "(A new question you write yourself that fits this role and isn't in the conversation yet.)"
@@ -187,7 +220,9 @@ export default function Interview() {
           style: S.settings.style, mode: S.settings.mode === "targeted" ? "targeted practice" : "full mock interview",
           time_left: String(minutesLeft),
           profile: c.app.profile,
-          current_question: cur.surprise ? "(a question you wrote yourself; see the conversation)" : cur.question || "(see the conversation)",
+          current_question: ice
+            ? "(Icebreaker: you asked how they're feeling today. Reply briefly and warmly in one sentence, don't judge it, then say \"Let's start.\" and ask the next question. Use comment_and_next.)"
+            : cur.surprise ? "(a question you wrote yourself; see the conversation)" : cur.question || "(see the conversation)",
           model_answer: cur.model_answer || "(none)",
           follow_ups_used: String(S.followUps),
           next_question: nextQuestion,
@@ -208,7 +243,8 @@ export default function Interview() {
     S.turns[S.turns.length - 1].score = r.private_score;
     S.turns[S.turns.length - 1].notes = r.notes;
 
-    if (r.action === "follow_up") S.followUps++;
+    if (ice) { if (r.action !== "repeat" && r.action !== "pause") S.icebreaker = false; }
+    else if (r.action === "follow_up") S.followUps++;
     else if (r.action === "comment_and_next") { if (nextItem) S.index++; S.followUps = 0; }
 
     S.turns.push({ role: "javis", text: r.say, qIndex: S.index, action: r.action });
@@ -267,7 +303,7 @@ export default function Interview() {
       <header className={s.top}>
         <div>
           <strong>{app.company} · {app.position}</strong>
-          <span>{ui.phase === "join" ? "Mock interview" : `Mock interview · Question ${qNum} of ${total}`}</span>
+          <span>{ui.phase === "join" ? "Mock interview" : S?.icebreaker ? "Mock interview · Warm-up" : `Mock interview · Question ${qNum} of ${total}`}</span>
         </div>
         <span className="mono">{fmt(elapsed)}</span>
       </header>
@@ -294,7 +330,12 @@ export default function Interview() {
         )}
         {ui.phase === "ended" && (
           <div className={s.center}>
-            <p>Call ended. Your full report arrives in Step 7.</p>
+            <p className={s.ended}>Call ended</p>
+            <p className="mono" style={{ color: "var(--muted)" }}>
+              {fmt(Math.round(((S?.endedAt || Date.now()) - (S?.startedAt || Date.now())) / 1000))} ·{" "}
+              {new Set((S?.turns || []).filter((t) => t.role === "candidate" && !t.icebreaker).map((t) => t.qIndex)).size} of {total} questions answered
+            </p>
+            <p style={{ color: "var(--muted)" }}>Your full report arrives in Step 7.</p>
             <Link className="btn btn-outline" href="/questions">Back to questions</Link>
           </div>
         )}
