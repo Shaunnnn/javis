@@ -9,14 +9,14 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_BODY = 4_000_000; // Vercel's limit is 4.5 MB; images are shrunk in the browser first
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "audio/wav"];
 
 function validFiles(files) {
   return (
     Array.isArray(files) &&
     files.length <= 3 &&
     files.every(
-      (f) => f && IMAGE_TYPES.includes(f.mimeType) && typeof f.data === "string" &&
+      (f) => f && FILE_TYPES.includes(f.mimeType) && typeof f.data === "string" &&
         typeof f.label === "string" && f.label.length < 80
     )
   );

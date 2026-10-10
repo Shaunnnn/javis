@@ -1,0 +1,37 @@
+/* Video-call style interview screen. Javis's AI core replaces the placeholder in Step 5. */
+.call { max-width: 1100px; margin: 0 auto; padding: var(--space-4) var(--space-3); min-height: 100vh; display: flex; flex-direction: column; gap: var(--space-3); }
+.top { display: flex; justify-content: space-between; align-items: end; padding-bottom: var(--space-3); border-bottom: var(--line); }
+.top strong { display: block; font-weight: 500; }
+.top span { font-size: var(--text-sm); color: var(--muted); }
+
+.tile { position: relative; flex: 1; min-height: 440px; background: var(--panel); border: var(--line); border-radius: var(--radius); display: grid; place-items: center; overflow: hidden; }
+.tileLabel { position: absolute; left: var(--space-4); top: var(--space-3); font-size: var(--text-sm); color: var(--muted); }
+.name { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--brass-light); }
+.statusLabel { position: absolute; right: var(--space-4); top: var(--space-3); font-size: var(--text-sm); color: var(--muted); }
+.statusLabel i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: middle; }
+.tile[data-status="Speaking"] .statusLabel i { background: var(--brass-light); }
+.tile[data-status="Listening"] .statusLabel i { background: var(--sage); }
+.tile[data-status="Paused"] .statusLabel i { background: var(--danger); }
+
+.placeholder { width: 140px; height: 140px; border-radius: 50%; border: 1px solid var(--brass); display: grid; place-items: center; opacity: 0.8; }
+.placeholder span { width: 60%; height: 60%; border-radius: 50%; background: radial-gradient(circle, var(--brass-light), transparent 70%); transform: scale(calc(0.85 + var(--lvl, 0) * 0.6)); transition: transform 80ms linear; }
+.tile[data-status="Speaking"] .placeholder span { animation: pulse 0.9s var(--ease) infinite alternate; }
+.tile[data-status="Thinking"] .placeholder { animation: spin 3s linear infinite; border-style: dashed; }
+@keyframes pulse { to { transform: scale(1.25); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.center { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: var(--space-3); text-align: center; padding: var(--space-4); background: color-mix(in srgb, var(--panel) 82%, transparent); }
+.center p { margin: 0; max-width: 46ch; }
+.link { font: inherit; font-size: var(--text-sm); background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+.captions { position: absolute; left: 50%; bottom: var(--space-4); transform: translateX(-50%); width: min(86%, 720px); text-align: center; }
+.captions p { margin: 0; font-size: 18px; line-height: 1.5; }
+.you { color: var(--sage); }
+
+.controls { display: flex; justify-content: center; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; }
+.round { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--hairline); background: transparent; color: var(--ivory); font: 500 13px var(--font-body); cursor: pointer; }
+.round:hover { border-color: var(--muted); }
+.on { border-color: var(--ivory); }
+.end { border-color: var(--danger); color: var(--danger); }
+.gap { position: absolute; right: var(--space-4); color: var(--muted); }
+.controls { position: relative; }
