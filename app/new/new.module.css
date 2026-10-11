@@ -35,6 +35,7 @@
 @media (max-width: 760px) {
   .field, .submit { grid-template-columns: 1fr; gap: var(--space-3); }
   .submit > span { display: none; }
+  .submit button[type="submit"] { display: flex; margin: 0 auto; }
 }
 @media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: var(--space-3); } }
 .req { color: var(--danger); font-size: var(--text-sm); vertical-align: top; }
