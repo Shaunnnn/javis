@@ -402,11 +402,26 @@ export default function Interview() {
 
   async function end(early = false) {
     const c = ctx.current;
+    if (c.ending) return; // ignore a second tap
+    c.ending = true;
     if (early) {
-      c.voice?.stop(); c.listener?.stop();
+      // Stop everything first so a half-finished answer isn't sent on and Javis doesn't carry on.
+      c.stopped = true;
+      clearTimeout(c.fillerTimer);
+      c.stopWatch?.(); c.voice?.stop(); c.listener?.stop();
       const line = `Of course. Thank you for your time, ${addressFor(c.app)}. We'll stop there.`;
       sess.current.turns.push({ role: "javis", text: line, action: "wrap_up" });
-      await say(line);
+      setStatus("Ending");
+      setCaption(line);
+      // Say goodbye if the voice is ready within a few seconds; otherwise just end.
+      const pending = speak(line).catch(() => null);
+      const voice = await Promise.race([pending, new Promise((r) => setTimeout(() => r(null), 4000))]);
+      if (voice) {
+        c.voice = voice; trackVolume(voice); setStatus("Speaking");
+        await Promise.race([voice.done, new Promise((r) => setTimeout(r, 8000))]);
+      } else {
+        pending.then((v) => v?.stop()); // too slow: make sure it never plays after the call ends
+      }
     }
     sess.current.status = "ended";
     sess.current.endedAt = Date.now();
