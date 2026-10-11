@@ -20,8 +20,10 @@
 .pageTopLabel { grid-column: 1; grid-row: 1; }
 .pageTopTitle { grid-column: 1; grid-row: 2; margin: 0; }
 .pageTop > .topBtn { grid-column: 2; grid-row: 2; position: relative; top: 8px; }
+/* An intro line under the title; on phones the button moves below it. */
+.pageTopLede { grid-column: 1 / -1; grid-row: 3; margin-top: var(--space-3); }
 .topBtn { height: 52px; display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
-@media (max-width: 760px) { .pageTop { grid-template-columns: 1fr; } .pageTop > .topBtn { grid-column: 1; grid-row: 3; justify-self: start; margin-top: var(--space-4); top: 0; } }
+@media (max-width: 760px) { .pageTop { grid-template-columns: 1fr; } .pageTop > .topBtn { grid-column: 1; grid-row: 4; justify-self: start; margin: 0 0 var(--space-5); top: 0; } .pageTopLede { margin-bottom: var(--space-4); } }
 
 /* Short items (e.g. skills): bullet list in two columns. */
 .inlineList { margin: 0; padding-left: 1.1em; columns: 2; column-gap: var(--space-5); }

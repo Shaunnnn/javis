@@ -47,11 +47,11 @@ export default function Application() {
         <p className={`${u.sectionLabel} ${u.pageTopLabel}`}>{tidy(app.company)}</p>
         <h1 className={`${u.title} ${u.pageTopTitle}`}>{tidy(app.position)}</h1>
         <Link href="/questions" className={`btn btn-primary ${u.topBtn}`}>Prepare questions</Link>
+        <p className={`${u.lede} ${u.pageTopLede}`}>
+          {p.candidate_name ? `${p.candidate_name}, here` : "Here"} is how your experience lines up with the role.
+          Every question Javis prepares builds on this.
+        </p>
       </section>
-      <p className={u.lede} style={{ marginTop: "var(--space-3)" }}>
-        {p.candidate_name ? `${p.candidate_name}, here` : "Here"} is how your experience lines up with the role.
-        Every question Javis prepares builds on this.
-      </p>
 
       {p.company_context && (
         <section className={u.section}>
