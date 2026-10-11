@@ -61,7 +61,12 @@
 /* Export PDF (browser print): light, every answer shown, no controls. */
 @media print {
   .topActions, .bar, .pick, .reveal, .practised, .status { display: none !important; }
-  .item { grid-template-columns: 36px 1fr; break-inside: avoid; border-color: #ccc; }
+  /* Same layout on every device: number left, question right (the phone layout hides the number). */
+  .item { grid-template-columns: 36px 1fr; break-inside: auto; border-color: #ccc; }
+  .num { display: block !important; grid-column: 1; padding-top: 2px; }
+  .body { grid-column: 2; }
+  .question { break-after: avoid; }
+  .answer li, .full p { break-inside: avoid; }
   .num, .type, .tips { color: #555; }
   .answer { display: block !important; border-left-color: #999; }
   .full { display: block !important; color: #111; }
