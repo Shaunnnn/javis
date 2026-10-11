@@ -76,10 +76,19 @@
 .endBtn { height: 52px; padding: 0 22px; border-radius: 26px; border: 1px solid var(--brass); background: transparent; color: var(--brass-light); font: 500 14px var(--font-body); cursor: pointer; }
 .endBtn:hover { background: rgba(201, 165, 92, 0.1); }
 
+/* Phones: stack instead of layering, so nothing sits on top of anything else.
+   Javis's core on top, captions below it, your self-view small in the top-right corner. */
 @media (max-width: 700px) {
-  .self { width: 120px; }
-  .captions { right: calc(120px + var(--space-3) * 2); }
+  .call { min-height: 100dvh; } /* fit the visible screen so the header never slides under the status bar */
+  .tile { display: flex; flex-direction: column; min-height: 0; }
+  .core { position: relative; inset: auto; flex: none; height: min(48dvh, 380px); margin-top: 36px; }
+  .self { top: 48px; bottom: auto; width: 92px; }
+  .captions { position: relative; left: auto; right: auto; bottom: auto; width: 100%; padding: 0 var(--space-4) var(--space-4); max-height: 30dvh; overflow-y: auto; }
   .captions p { font-size: 16px; }
+  .controls { gap: var(--space-2); }
+  .round { width: 48px; height: 48px; }
+  .endBtn { height: 48px; padding: 0 16px; }
+  .gap { display: none; } /* the reply timer is for testing; no room on a phone */
 }
 
 .preview { margin: var(--space-2) 0; display: grid; gap: 6px; text-align: left; min-width: min(420px, 90%); }
