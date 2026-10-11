@@ -82,6 +82,8 @@
   .call { min-height: 100dvh; } /* fit the visible screen so the header never slides under the status bar */
   .tile { display: flex; flex-direction: column; min-height: 0; }
   .core { position: relative; inset: auto; flex: none; height: min(48dvh, 380px); margin-top: 36px; }
+  /* The 3D canvas renders a shade lighter than the tile; fade its edges so no box shows. */
+  .core { -webkit-mask-image: radial-gradient(ellipse 50% 50% at center, #000 72%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at center, #000 72%, transparent 100%); }
   .self { top: 48px; bottom: auto; width: 92px; }
   .captions { position: relative; left: auto; right: auto; bottom: auto; width: 100%; padding: 0 var(--space-4) var(--space-4); max-height: 30dvh; overflow-y: auto; }
   .captions p { font-size: 16px; }
